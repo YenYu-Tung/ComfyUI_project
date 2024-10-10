@@ -1,0 +1,1613 @@
+{
+  "1": {
+    "inputs": {
+      "image": "下載 (1).jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "4": {
+    "inputs": {
+      "image": "下載.jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "8": {
+    "inputs": {
+      "image": "下載 (2).jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "12": {
+    "inputs": {
+      "image": "下載 (2).jpg",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "25": {
+    "inputs": {
+      "resolution": "1024x1024 (1.0)",
+      "batch_size": 1,
+      "width_override": 0,
+      "height_override": 0
+    },
+    "class_type": "SDXLEmptyLatentSizePicker+",
+    "_meta": {
+      "title": "🔧 Empty Latent Size Picker"
+    }
+  },
+  "28": {
+    "inputs": {
+      "boolean": [
+        "32",
+        0
+      ],
+      "value_if_true": 1,
+      "value_if_false": 2
+    },
+    "class_type": "CR Set Value On Boolean",
+    "_meta": {
+      "title": "⚙️ CR Set Value On Boolean"
+    }
+  },
+  "32": {
+    "inputs": {
+      "input_id": "bool_gen_product_img",
+      "default_value": true,
+      "display_name": "",
+      "description": ""
+    },
+    "class_type": "ComfyUIDeployExternalBoolean",
+    "_meta": {
+      "title": "External Boolean (ComfyUI Deploy)"
+    }
+  },
+  "33": {
+    "inputs": {
+      "input_id": "img_product",
+      "display_name": "",
+      "description": "",
+      "default_value": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "ComfyUIDeployExternalImage",
+    "_meta": {
+      "title": "External Image (ComfyUI Deploy)"
+    }
+  },
+  "34": {
+    "inputs": {
+      "input_id": "img_ref_composition",
+      "display_name": "",
+      "description": "",
+      "default_value": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "ComfyUIDeployExternalImage",
+    "_meta": {
+      "title": "External Image (ComfyUI Deploy)"
+    }
+  },
+  "35": {
+    "inputs": {
+      "input_id": "img_ref_background",
+      "display_name": "",
+      "description": "",
+      "default_value": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "ComfyUIDeployExternalImage",
+    "_meta": {
+      "title": "External Image (ComfyUI Deploy)"
+    }
+  },
+  "36": {
+    "inputs": {
+      "input_id": "img_ref_lighting",
+      "display_name": "",
+      "description": "",
+      "default_value": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "ComfyUIDeployExternalImage",
+    "_meta": {
+      "title": "External Image (ComfyUI Deploy)"
+    }
+  },
+  "37": {
+    "inputs": {
+      "interpolation_mode": "bicubic",
+      "image": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "JWImageResizeToClosestSDXLResolution",
+    "_meta": {
+      "title": "Image Resize to Closest SDXL Resolution"
+    }
+  },
+  "44": {
+    "inputs": {
+      "input_id": "int_width",
+      "default_value": [
+        "25",
+        1
+      ],
+      "display_name": "",
+      "description": ""
+    },
+    "class_type": "ComfyUIDeployExternalNumberInt",
+    "_meta": {
+      "title": "External Number Int (ComfyUI Deploy)"
+    }
+  },
+  "45": {
+    "inputs": {
+      "input_id": "int_height",
+      "default_value": [
+        "25",
+        2
+      ],
+      "display_name": "",
+      "description": ""
+    },
+    "class_type": "ComfyUIDeployExternalNumberInt",
+    "_meta": {
+      "title": "External Number Int (ComfyUI Deploy)"
+    }
+  },
+  "50": {
+    "inputs": {
+      "question": "Describe the background using keyword",
+      "image": [
+        "35",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: QWenImage2Prompt",
+    "_meta": {
+      "title": "LayerUtility: QWenImage2Prompt"
+    }
+  },
+  "51": {
+    "inputs": {
+      "text": [
+        "50",
+        0
+      ],
+      "text2": "white wall, wooden table with jar of jam and spoon, flower arrangement in vase on top left corner"
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "52": {
+    "inputs": {
+      "question": "Describe the photo Lighting color tone ",
+      "image": [
+        "36",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: QWenImage2Prompt",
+    "_meta": {
+      "title": "LayerUtility: QWenImage2Prompt"
+    }
+  },
+  "53": {
+    "inputs": {
+      "text": [
+        "52",
+        0
+      ],
+      "text2": "The image has warm, natural lighting with soft shadows and highlights on objects like the jar of honey and the green glass bottle. The background is blurred, focusing attention on the foreground items."
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "56": {
+    "inputs": {
+      "question": "What is this object, Keywords",
+      "image": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: QWenImage2Prompt",
+    "_meta": {
+      "title": "LayerUtility: QWenImage2Prompt"
+    }
+  },
+  "57": {
+    "inputs": {
+      "text": [
+        "56",
+        0
+      ],
+      "text2": "A gray water bottle with a black lid and white label on its side rests next to an open newspaper that has a visible page number. The background features closed blinds from a window."
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "60": {
+    "inputs": {
+      "ckpt_name": "epicrealism_naturalSinRC1VAE.safetensors",
+      "vae_name": "Baked VAE",
+      "clip_skip": -1,
+      "lora_name": "None",
+      "lora_model_strength": 1,
+      "lora_clip_strength": 1,
+      "positive": [
+        "82",
+        0
+      ],
+      "negative": [
+        "82",
+        1
+      ],
+      "token_normalization": "none",
+      "weight_interpretation": "comfy",
+      "empty_latent_width": [
+        "44",
+        0
+      ],
+      "empty_latent_height": [
+        "45",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "Efficient Loader",
+    "_meta": {
+      "title": "Efficient Loader"
+    }
+  },
+  "62": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 1020785499677145,
+      "steps": 25,
+      "cfg": 2,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "noise_mode": "GPU(=A1111)",
+      "return_with_leftover_noise": false,
+      "batch_seed_mode": "incremental",
+      "variation_seed": 0,
+      "variation_strength": 0,
+      "variation_method": "linear",
+      "model": [
+        "97",
+        0
+      ],
+      "positive": [
+        "98",
+        0
+      ],
+      "negative": [
+        "98",
+        1
+      ],
+      "latent_image": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced //Inspire",
+    "_meta": {
+      "title": "KSamplerAdvanced (inspire)"
+    }
+  },
+  "63": {
+    "inputs": {
+      "pixels": [
+        "103",
+        0
+      ],
+      "vae": [
+        "60",
+        4
+      ]
+    },
+    "class_type": "VAEEncodeArgMax",
+    "_meta": {
+      "title": "VAE Encode ArgMax"
+    }
+  },
+  "70": {
+    "inputs": {
+      "samples": [
+        "71",
+        0
+      ],
+      "vae": [
+        "73",
+        4
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "71": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 1020785499677145,
+      "steps": 8,
+      "cfg": 2,
+      "sampler_name": "dpmpp_sde",
+      "scheduler": "AYS SDXL",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "noise_mode": "GPU(=A1111)",
+      "return_with_leftover_noise": false,
+      "batch_seed_mode": "incremental",
+      "variation_seed": 0,
+      "variation_strength": 0,
+      "variation_method": "linear",
+      "model": [
+        "74",
+        0
+      ],
+      "positive": [
+        "111",
+        0
+      ],
+      "negative": [
+        "111",
+        1
+      ],
+      "latent_image": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "KSamplerAdvanced //Inspire",
+    "_meta": {
+      "title": "KSamplerAdvanced (inspire)"
+    }
+  },
+  "72": {
+    "inputs": {
+      "text_positive": [
+        "79",
+        0
+      ],
+      "text_negative": "",
+      "style": "sai-photographic",
+      "log_prompt": true,
+      "style_positive": true,
+      "style_negative": true
+    },
+    "class_type": "SDXLPromptStyler",
+    "_meta": {
+      "title": "SDXL Prompt Styler"
+    }
+  },
+  "73": {
+    "inputs": {
+      "ckpt_name": "juggernautXL_v9Rdphoto2Lightning.safetensors",
+      "vae_name": "Baked VAE",
+      "clip_skip": -1,
+      "lora_name": "None",
+      "lora_model_strength": 1.6,
+      "lora_clip_strength": 1,
+      "positive": [
+        "72",
+        0
+      ],
+      "negative": [
+        "72",
+        1
+      ],
+      "token_normalization": "length+mean",
+      "weight_interpretation": "comfy++",
+      "empty_latent_width": [
+        "44",
+        0
+      ],
+      "empty_latent_height": [
+        "45",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "Efficient Loader",
+    "_meta": {
+      "title": "Efficient Loader"
+    }
+  },
+  "74": {
+    "inputs": {
+      "weight": 0.8,
+      "weight_type": "strong style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 0.8,
+      "embeds_scaling": "K+mean(V) w/ C penalty",
+      "model": [
+        "75",
+        0
+      ],
+      "ipadapter": [
+        "75",
+        1
+      ],
+      "image": [
+        "35",
+        0
+      ]
+    },
+    "class_type": "IPAdapterAdvanced",
+    "_meta": {
+      "title": "IPAdapter Advanced"
+    }
+  },
+  "75": {
+    "inputs": {
+      "preset": "PLUS (high strength)",
+      "model": [
+        "73",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoader",
+    "_meta": {
+      "title": "IPAdapter Unified Loader"
+    }
+  },
+  "77": {
+    "inputs": {
+      "text": [
+        "72",
+        0
+      ],
+      "text2": "cinematic photo ,(background:2),white wall, wooden table with jar of jam and spoon, flower arrangement in vase on top left corner . 35mm photograph, film, bokeh, professional, 4k, highly detailed"
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "79": {
+    "inputs": {
+      "prompt1": [
+        "80",
+        0
+      ],
+      "prompt2": [
+        "51",
+        0
+      ],
+      "separator": ","
+    },
+    "class_type": "easy promptConcat",
+    "_meta": {
+      "title": "PromptConcat"
+    }
+  },
+  "80": {
+    "inputs": {
+      "Text": ",(background:2)"
+    },
+    "class_type": "DF_Text_Box",
+    "_meta": {
+      "title": "Text Box"
+    }
+  },
+  "82": {
+    "inputs": {
+      "text_positive": [
+        "137",
+        0
+      ],
+      "text_negative": "",
+      "style": "sai-photographic",
+      "log_prompt": true,
+      "style_positive": true,
+      "style_negative": true
+    },
+    "class_type": "SDXLPromptStyler",
+    "_meta": {
+      "title": "SDXL Prompt Styler"
+    }
+  },
+  "85": {
+    "inputs": {
+      "samples": [
+        "62",
+        0
+      ],
+      "vae": [
+        "60",
+        4
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "87": {
+    "inputs": {
+      "images": [
+        "170",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "97": {
+    "inputs": {
+      "model_path": "iclight_sd15_fc.safetensors",
+      "model": [
+        "60",
+        0
+      ]
+    },
+    "class_type": "LoadAndApplyICLightUnet",
+    "_meta": {
+      "title": "Load And Apply IC-Light"
+    }
+  },
+  "98": {
+    "inputs": {
+      "multiplier": 0.18,
+      "positive": [
+        "60",
+        1
+      ],
+      "negative": [
+        "60",
+        2
+      ],
+      "vae": [
+        "60",
+        4
+      ],
+      "foreground": [
+        "109",
+        0
+      ]
+    },
+    "class_type": "ICLightConditioning",
+    "_meta": {
+      "title": "IC-Light Conditioning"
+    }
+  },
+  "99": {
+    "inputs": {
+      "text": [
+        "82",
+        0
+      ],
+      "text2": "cinematic photo ,The image has warm, natural lighting with soft shadows and highlights on objects like the jar of honey and the green glass bottle. The background is blurred, focusing attention on the foreground items. . 35mm photograph, film, bokeh, professional, 4k, highly detailed"
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "100": {
+    "inputs": {
+      "images": [
+        "103",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "102": {
+    "inputs": {
+      "channel": "red",
+      "image": [
+        "110",
+        0
+      ]
+    },
+    "class_type": "Image Select Channel",
+    "_meta": {
+      "title": "Image Select Channel"
+    }
+  },
+  "103": {
+    "inputs": {
+      "brightness": 1.2,
+      "contrast": 1,
+      "saturation": 1,
+      "image": [
+        "104",
+        0
+      ]
+    },
+    "class_type": "LayerColor: Brightness & Contrast",
+    "_meta": {
+      "title": "LayerColor: Brightness & Contrast"
+    }
+  },
+  "104": {
+    "inputs": {
+      "blur_radius": 30,
+      "sigma": 2,
+      "image": [
+        "102",
+        0
+      ]
+    },
+    "class_type": "ImageBlur",
+    "_meta": {
+      "title": "ImageBlur"
+    }
+  },
+  "105": {
+    "inputs": {
+      "mode": "Luminosity",
+      "blend_image": [
+        "85",
+        0
+      ],
+      "base_image": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "Color Blend",
+    "_meta": {
+      "title": "Color Blend"
+    }
+  },
+  "106": {
+    "inputs": {
+      "blend_percentage": 0.2,
+      "image_a": [
+        "105",
+        0
+      ],
+      "image_b": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "Image Blend",
+    "_meta": {
+      "title": "Image Blend"
+    }
+  },
+  "107": {
+    "inputs": {
+      "strength": 100,
+      "brightness": 0,
+      "contrast": 0,
+      "saturation": 0,
+      "red": 0,
+      "green": 0,
+      "blue": 0,
+      "mode": "RGB",
+      "image": [
+        "106",
+        0
+      ]
+    },
+    "class_type": "LayerColor: AutoAdjustV2",
+    "_meta": {
+      "title": "LayerColor: AutoAdjust V2"
+    }
+  },
+  "108": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_fhvzb_00001_.png&type=temp&subfolder=&rand=0.3118185785021659"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_fhvzb_00002_.png&type=temp&subfolder=&rand=0.9217239957884111"
+          }
+        ]
+      },
+      "image_a": [
+        "107",
+        0
+      ],
+      "image_b": [
+        "127",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "109": {
+    "inputs": {
+      "pixels": [
+        "127",
+        0
+      ],
+      "vae": [
+        "60",
+        4
+      ]
+    },
+    "class_type": "VAEEncodeArgMax",
+    "_meta": {
+      "title": "VAE Encode ArgMax"
+    }
+  },
+  "110": {
+    "inputs": {
+      "height": [
+        "45",
+        0
+      ],
+      "width": [
+        "44",
+        0
+      ],
+      "interpolation_mode": "bicubic",
+      "image": [
+        "36",
+        0
+      ]
+    },
+    "class_type": "JWImageResize",
+    "_meta": {
+      "title": "Image Resize"
+    }
+  },
+  "111": {
+    "inputs": {
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 0.8,
+      "positive": [
+        "73",
+        1
+      ],
+      "negative": [
+        "73",
+        2
+      ],
+      "control_net": [
+        "112",
+        0
+      ],
+      "image": [
+        "113",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "112": {
+    "inputs": {
+      "control_net_name": "diffusion_pytorch_model_V2.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "Load ControlNet Model"
+    }
+  },
+  "113": {
+    "inputs": {
+      "low_threshold": 100,
+      "high_threshold": 200,
+      "resolution": 1024,
+      "image": [
+        "170",
+        0
+      ]
+    },
+    "class_type": "CannyEdgePreprocessor",
+    "_meta": {
+      "title": "Canny Edge"
+    }
+  },
+  "114": {
+    "inputs": {
+      "width": [
+        "44",
+        0
+      ],
+      "height": [
+        "45",
+        0
+      ],
+      "red": 0,
+      "green": 0,
+      "blue": 0
+    },
+    "class_type": "Image Blank",
+    "_meta": {
+      "title": "Image Blank"
+    }
+  },
+  "115": {
+    "inputs": {
+      "invert_mask": false,
+      "blend_mode": "normal",
+      "opacity": 100,
+      "x_percent": 50,
+      "y_percent": 50,
+      "mirror": "None",
+      "scale": [
+        "118",
+        0
+      ],
+      "aspect_ratio": 1,
+      "rotate": 0,
+      "transform_method": "lanczos",
+      "anti_aliasing": 0,
+      "background_image": [
+        "114",
+        0
+      ],
+      "layer_image": [
+        "132",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: ImageBlendAdvance V2",
+    "_meta": {
+      "title": "LayerUtility: ImageBlendAdvance V2"
+    }
+  },
+  "118": {
+    "inputs": {
+      "number": 0.795,
+      "min_value": 0,
+      "max_value": 1,
+      "step": 0.001
+    },
+    "class_type": "FloatSlider",
+    "_meta": {
+      "title": "scale"
+    }
+  },
+  "119": {
+    "inputs": {
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "destination": [
+        "114",
+        0
+      ],
+      "source": [
+        "115",
+        0
+      ],
+      "mask": [
+        "115",
+        1
+      ]
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "ImageCompositeMasked"
+    }
+  },
+  "120": {
+    "inputs": {
+      "expand": -1,
+      "incremental_expandrate": 0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 1,
+      "lerp_alpha": 1,
+      "decay_factor": 1,
+      "fill_holes": false,
+      "mask": [
+        "131",
+        1
+      ]
+    },
+    "class_type": "GrowMaskWithBlur",
+    "_meta": {
+      "title": "Grow Mask With Blur"
+    }
+  },
+  "121": {
+    "inputs": {
+      "mask": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "LayerMask: MaskPreview",
+    "_meta": {
+      "title": "LayerMask: MaskPreview"
+    }
+  },
+  "124": {
+    "inputs": {
+      "images": [
+        "113",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "125": {
+    "inputs": {
+      "pixels": [
+        "119",
+        0
+      ],
+      "vae": [
+        "73",
+        4
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "126": {
+    "inputs": {
+      "mask_threshold": 250,
+      "gaussblur_radius": 8,
+      "invert_mask": false,
+      "images": [
+        "70",
+        0
+      ],
+      "masks": [
+        "129",
+        0
+      ]
+    },
+    "class_type": "LamaRemover",
+    "_meta": {
+      "title": "Big lama Remover"
+    }
+  },
+  "127": {
+    "inputs": {
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "destination": [
+        "126",
+        0
+      ],
+      "source": [
+        "119",
+        0
+      ],
+      "mask": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "ImageCompositeMasked"
+    }
+  },
+  "129": {
+    "inputs": {
+      "expand": 10,
+      "incremental_expandrate": 0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 0,
+      "lerp_alpha": 1,
+      "decay_factor": 1,
+      "fill_holes": false,
+      "mask": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "GrowMaskWithBlur",
+    "_meta": {
+      "title": "Grow Mask With Blur"
+    }
+  },
+  "130": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_jbnzm_00001_.png&type=temp&subfolder=&rand=0.24781863067983756"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_jbnzm_00002_.png&type=temp&subfolder=&rand=0.442918751209209"
+          }
+        ]
+      },
+      "image_a": [
+        "127",
+        0
+      ],
+      "image_b": [
+        "70",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "131": {
+    "inputs": {
+      "rem_mode": "RMBG-1.4",
+      "image_output": "Preview",
+      "save_prefix": "ComfyUI",
+      "torchscript_jit": false,
+      "images": [
+        "170",
+        0
+      ]
+    },
+    "class_type": "easy imageRemBg",
+    "_meta": {
+      "title": "Image Remove Bg"
+    }
+  },
+  "132": {
+    "inputs": {
+      "Input": [
+        "28",
+        0
+      ],
+      "image1": [
+        "139",
+        0
+      ],
+      "image2": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "CR Image Input Switch",
+    "_meta": {
+      "title": "🔀 CR Image Input Switch"
+    }
+  },
+  "135": {
+    "inputs": {
+      "ckpt_name": "juggernautXL_v9Rdphoto2Lightning.safetensors",
+      "vae_name": "Baked VAE",
+      "clip_skip": -2,
+      "lora_name": "None",
+      "lora_model_strength": 1,
+      "lora_clip_strength": 1,
+      "positive": [
+        "136",
+        0
+      ],
+      "negative": [
+        "136",
+        1
+      ],
+      "token_normalization": "length+mean",
+      "weight_interpretation": "comfy++",
+      "empty_latent_width": [
+        "44",
+        0
+      ],
+      "empty_latent_height": [
+        "45",
+        0
+      ],
+      "batch_size": 1
+    },
+    "class_type": "Efficient Loader",
+    "_meta": {
+      "title": "Efficient Loader"
+    }
+  },
+  "136": {
+    "inputs": {
+      "text_positive": [
+        "168",
+        0
+      ],
+      "text_negative": "",
+      "style": "base",
+      "log_prompt": false,
+      "style_positive": true,
+      "style_negative": true
+    },
+    "class_type": "SDXLPromptStyler",
+    "_meta": {
+      "title": "SDXL Prompt Styler"
+    }
+  },
+  "137": {
+    "inputs": {
+      "prompt2": [
+        "52",
+        0
+      ],
+      "separator": ","
+    },
+    "class_type": "easy promptConcat",
+    "_meta": {
+      "title": "PromptConcat"
+    }
+  },
+  "138": {
+    "inputs": {
+      "add_noise": true,
+      "noise_seed": 1020785499677145,
+      "steps": 6,
+      "cfg": 2,
+      "sampler_name": "dpmpp_sde",
+      "scheduler": "karras",
+      "start_at_step": 0,
+      "end_at_step": 10000,
+      "noise_mode": "GPU(=A1111)",
+      "return_with_leftover_noise": false,
+      "batch_seed_mode": "incremental",
+      "variation_seed": 0,
+      "variation_strength": 0,
+      "variation_method": "linear",
+      "model": [
+        "159",
+        0
+      ],
+      "positive": [
+        "155",
+        0
+      ],
+      "negative": [
+        "155",
+        1
+      ],
+      "latent_image": [
+        "135",
+        3
+      ]
+    },
+    "class_type": "KSamplerAdvanced //Inspire",
+    "_meta": {
+      "title": "KSamplerAdvanced (inspire)"
+    }
+  },
+  "139": {
+    "inputs": {
+      "samples": [
+        "138",
+        0
+      ],
+      "vae": [
+        "135",
+        4
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "140": {
+    "inputs": {
+      "images": [
+        "139",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "141": {
+    "inputs": {
+      "mask_threshold": 250,
+      "gaussblur_radius": 8,
+      "invert_mask": false,
+      "images": [
+        "107",
+        0
+      ],
+      "masks": [
+        "143",
+        0
+      ]
+    },
+    "class_type": "LamaRemover",
+    "_meta": {
+      "title": "Big lama Remover"
+    }
+  },
+  "142": {
+    "inputs": {
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "destination": [
+        "141",
+        0
+      ],
+      "source": [
+        "119",
+        0
+      ],
+      "mask": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "ImageCompositeMasked"
+    }
+  },
+  "143": {
+    "inputs": {
+      "expand": 10,
+      "incremental_expandrate": 0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 0,
+      "lerp_alpha": 1,
+      "decay_factor": 1,
+      "fill_holes": false,
+      "mask": [
+        "120",
+        0
+      ]
+    },
+    "class_type": "GrowMaskWithBlur",
+    "_meta": {
+      "title": "Grow Mask With Blur"
+    }
+  },
+  "144": {
+    "inputs": {
+      "rgthree_comparer": {
+        "images": [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_bgcfg_00001_.png&type=temp&subfolder=&rand=0.1233521381820879"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_bgcfg_00002_.png&type=temp&subfolder=&rand=0.7693907248697918"
+          }
+        ]
+      },
+      "image_a": [
+        "145",
+        0
+      ],
+      "image_b": [
+        "107",
+        0
+      ]
+    },
+    "class_type": "Image Comparer (rgthree)",
+    "_meta": {
+      "title": "Image Comparer (rgthree)"
+    }
+  },
+  "145": {
+    "inputs": {
+      "blend_percentage": 0.5,
+      "image_a": [
+        "142",
+        0
+      ],
+      "image_b": [
+        "107",
+        0
+      ]
+    },
+    "class_type": "Image Blend",
+    "_meta": {
+      "title": "Image Blend"
+    }
+  },
+  "148": {
+    "inputs": {
+      "Text": ",empty background"
+    },
+    "class_type": "DF_Text_Box",
+    "_meta": {
+      "title": "Text Box"
+    }
+  },
+  "149": {
+    "inputs": {
+      "question": "Describe the object angle, shoter",
+      "image": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "LayerUtility: QWenImage2Prompt",
+    "_meta": {
+      "title": "LayerUtility: QWenImage2Prompt"
+    }
+  },
+  "150": {
+    "inputs": {
+      "text": [
+        "149",
+        0
+      ],
+      "text2": "The image shows a gray Lufthansa coffee cup with a black lid and white label on its side resting near an open newspaper. The background is blurred by closed blinds on a window."
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "151": {
+    "inputs": {
+      "prompt1": [
+        "57",
+        0
+      ],
+      "prompt2": [
+        "148",
+        0
+      ],
+      "separator": ","
+    },
+    "class_type": "easy promptConcat",
+    "_meta": {
+      "title": "PromptConcat"
+    }
+  },
+  "152": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "145",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "153": {
+    "inputs": {
+      "text": [
+        "136",
+        0
+      ],
+      "text2": "A gray water bottle with a black lid and white label on its side rests next to an open newspaper that has a visible page number. The background features closed blinds from a window.,,empty background,The image shows a gray Lufthansa coffee cup with a black lid and white label on its side resting near an open newspaper. The background is blurred by closed blinds on a window."
+    },
+    "class_type": "ShowText|pysssss",
+    "_meta": {
+      "title": "Show Text 🐍"
+    }
+  },
+  "155": {
+    "inputs": {
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 0.2,
+      "positive": [
+        "135",
+        1
+      ],
+      "negative": [
+        "135",
+        2
+      ],
+      "control_net": [
+        "156",
+        0
+      ],
+      "image": [
+        "158",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "156": {
+    "inputs": {
+      "control_net_name": "diffusion_pytorch_model.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "Load ControlNet Model"
+    }
+  },
+  "158": {
+    "inputs": {
+      "blur_radius": 30,
+      "sigma": 1,
+      "image": [
+        "166",
+        0
+      ]
+    },
+    "class_type": "ImageBlur",
+    "_meta": {
+      "title": "ImageBlur"
+    }
+  },
+  "159": {
+    "inputs": {
+      "weight": 0.98,
+      "weight_type": "strong style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "K+mean(V) w/ C penalty",
+      "model": [
+        "160",
+        0
+      ],
+      "ipadapter": [
+        "160",
+        1
+      ],
+      "image": [
+        "33",
+        0
+      ]
+    },
+    "class_type": "IPAdapterAdvanced",
+    "_meta": {
+      "title": "IPAdapter Advanced"
+    }
+  },
+  "160": {
+    "inputs": {
+      "preset": "PLUS (high strength)",
+      "model": [
+        "135",
+        0
+      ]
+    },
+    "class_type": "IPAdapterUnifiedLoader",
+    "_meta": {
+      "title": "IPAdapter Unified Loader"
+    }
+  },
+  "164": {
+    "inputs": {
+      "transparency": false,
+      "model": "silueta",
+      "post_processing": false,
+      "only_mask": false,
+      "alpha_matting": false,
+      "alpha_matting_foreground_threshold": 240,
+      "alpha_matting_background_threshold": 10,
+      "alpha_matting_erode_size": 10,
+      "background_color": "black",
+      "images": [
+        "34",
+        0
+      ]
+    },
+    "class_type": "Image Rembg (Remove Background)",
+    "_meta": {
+      "title": "Image Rembg (Remove Background)"
+    }
+  },
+  "166": {
+    "inputs": {
+      "resolution": 512,
+      "image": [
+        "164",
+        0
+      ]
+    },
+    "class_type": "Zoe-DepthMapPreprocessor",
+    "_meta": {
+      "title": "Zoe Depth Map"
+    }
+  },
+  "167": {
+    "inputs": {
+      "images": [
+        "158",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "168": {
+    "inputs": {
+      "prompt1": [
+        "151",
+        0
+      ],
+      "prompt2": [
+        "150",
+        0
+      ],
+      "separator": ","
+    },
+    "class_type": "easy promptConcat",
+    "_meta": {
+      "title": "PromptConcat"
+    }
+  },
+  "170": {
+    "inputs": {
+      "transparency": false,
+      "model": "silueta",
+      "post_processing": false,
+      "only_mask": false,
+      "alpha_matting": false,
+      "alpha_matting_foreground_threshold": 240,
+      "alpha_matting_background_threshold": 10,
+      "alpha_matting_erode_size": 10,
+      "background_color": "black",
+      "images": [
+        "119",
+        0
+      ]
+    },
+    "class_type": "Image Rembg (Remove Background)",
+    "_meta": {
+      "title": "Image Rembg (Remove Background)"
+    }
+  }
+}
