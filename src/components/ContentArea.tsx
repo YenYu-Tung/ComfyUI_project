@@ -63,6 +63,7 @@ type StageState = {
   history: ImageData[];
   thumbnailUrl: string | null;
   historyIndex: number;
+  layers: LayerData[]; // 添加圖層數組
 };
 
 // 修改 DropdownIcon 組件，調整大小
@@ -359,8 +360,8 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     const canvas = displayContextRef.current.canvas;
     displayContextRef.current.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 反轉順序渲染圖層
-    for (let i = layers.length - 1; i >= 0; i--) {
+    // 從頂層到底層渲染圖層
+    for (let i = 0; i < layers.length; i++) {
       const layer = layers[i];
       if (layer.isVisible) {
         displayContextRef.current.globalAlpha = layer.opacity;
@@ -382,9 +383,9 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
 
   const [stages, setStages] = useState<Record<string, StageState>>({
-    stage1: { history: [], thumbnailUrl: null, historyIndex: 0 },
-    stage2: { history: [], thumbnailUrl: null, historyIndex: 0 },
-    stage3: { history: [], thumbnailUrl: null, historyIndex: 0 },
+    stage1: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+    stage2: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+    stage3: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
   });
 
   const saveCurrentStageState = (canvasHistory: ImageData[], thumbnailUrl: string | null) => {
@@ -394,70 +395,27 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         history: canvasHistory,
         thumbnailUrl: thumbnailUrl,
         historyIndex: canvasHistory.length - 1,
+        layers: [...layers]
       },
     }));
   };
   const switchStage = (newStage: string) => {
-    // 保存當前 Stage 的文字內容
-    if (currentStage === 'stage2') {
-      const contentElement = document.querySelector('[contenteditable]');
-      if (contentElement) {
-        setStage2Text(contentElement.textContent || 'Describe your idea');
+    // 保存當前 stage 的圖層狀態
+    setStages(prev => ({
+      ...prev,
+      [currentStage]: {
+        ...prev[currentStage],
+        layers: [...layers]
       }
-    } else if (currentStage === 'stage3') {
-      const contentElement = document.querySelector('[contenteditable]');
-      if (contentElement) {
-        setStage3Text(contentElement.textContent || 'Describe your idea');
-      }
-    }
+    }));
 
-    // 儲存當前 Stage 狀態
-    const activeLayer = layers[activeLayerIndex];
-    if (!activeLayer) {
-      saveCurrentStageState([], null);
-      handleStageClick(newStage);
-      return;
-    }
+    // 載入新 stage 的圖層
+    const newStageLayers = stages[newStage].layers;
+    setLayers(newStageLayers.length > 0 ? newStageLayers : []);
+    setActiveLayerIndex(0);
 
-    if (!activeLayer.history) {
-      saveCurrentStageState([], null);
-    } else {
-      saveCurrentStageState(activeLayer.history, thumbnailUrl);
-    }
-
-    // 切換到新 Stage
+    // 其他原有的 stage 切換邏輯...
     handleStageClick(newStage);
-
-    // 載入新 Stage 的記錄
-    const newStageState = stages[newStage];
-    if (newStageState) {
-      setCanvasHistory(newStageState.history);
-      setThumbnailUrl(newStageState.thumbnailUrl);
-    } else {
-      setCanvasHistory([]);
-      setThumbnailUrl(null);
-    }
-
-    // 检查新 stage 的图层数量，更新按钮状态
-    const addButton = document.querySelector('.add-preview-button') as HTMLElement;
-    if (addButton) {
-      if (layers.length >= MAX_PREVIEW_LAYERS) {
-        addButton.style.backgroundColor = '#ECECF3';
-        addButton.style.cursor = 'not-allowed';
-      } else {
-        addButton.style.backgroundColor = '#E6E5FF';
-        addButton.style.cursor = 'pointer';
-      }
-    }
-
-    // 切換到新 Stage 時，確保有選中的預覽圖層
-    const newStageLayers = stagePreviewLayers[newStage as keyof StagePreviewLayers];
-    if (newStageLayers.length > 0 && !selectedPreviewIds[newStage]) {
-      setSelectedPreviewIds(prev => ({
-        ...prev,
-        [newStage]: newStageLayers[0].id
-      }));
-    }
   };
 
   const initializeCanvas = useCallback(() => {
@@ -498,10 +456,13 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
       setLayers([initialLayer]);
       setActiveLayerIndex(0);
+    } else {
+      // 如果已有圖層，重新繪製所有圖層
+      updateDisplayCanvas();
     }
 
     setIsInitialized(true);
-  }, [layers.length]);
+  }, [layers.length, updateDisplayCanvas]);
 
 
   useEffect(() => {
@@ -1014,17 +975,19 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<SelectedFiles>({});
 
   const base64ToBlob = (base64: string) => {
-    const [metadata, data] = base64.split(",");
-    const mimeType = metadata.match(/data:([^;]+);base64/)?.[1];
-    if (!mimeType) throw new Error("Invalid Base64 string");
-    const binary = atob(data);
-    const array = new Uint8Array(binary.length);
-
-    for (let i = 0; i < binary.length; i++) {
-      array[i] = binary.charCodeAt(i);
+    try {
+      const [metadata, data] = base64.split(",");
+      const mimeType = metadata.match(/data:([^;]+);base64/)?.[1] || 'image/png';
+      const binary = atob(data);
+      const array = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        array[i] = binary.charCodeAt(i);
+      }
+      return new Blob([array], { type: mimeType });
+    } catch (error) {
+      console.error('Error converting base64 to blob:', error);
+      throw error;
     }
-
-    return new Blob([array], { type: mimeType });
   };
 
   const fetchBlobFromUrl = async (blobUrl: string) => {
@@ -1055,73 +1018,144 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
   // 修改 generateImages 函數，在成功生成圖片後將其添加到歷史記錄中
   const generateImages = async () => {
-    const formData = new FormData();
-    const selectedFiles: SelectedFiles = {};
-
-    // Stage 1: Ensure Thumbnail URL exists
-    if (stages.stage1.thumbnailUrl) {
-      selectedFiles["node_392"] = stages.stage1.thumbnailUrl;
-    } else {
-      console.error("Stage1 must have a thumbnailUrl");
-      setIsGenerating(false);
-      return;
-    }
-
-    // Stage 2: Collect Photos or Thumbnail URLs
-    const stage2Files: { key: string; value: string | File }[] = [];
-    if (stage2Photo) stage2Files.push({ key: "node_58", value: stage2Photo });
-    if (stages.stage2.thumbnailUrl) stage2Files.push({ key: "node_428", value: stages.stage2.thumbnailUrl });
-    if (stage2Files.length === 0) {
-      console.error("Stage2 must have at least one photo or thumbnailUrl");
-      setIsGenerating(false);
-      return;
-    }
-    stage2Files.forEach(({ key, value }) => {
-      selectedFiles[key] = value;
-    });
-
-    // Stage 3: Collect Photos or Thumbnail URLs
-    const stage3Files: { key: string; value: string | File }[] = [];
-    if (stage3Photo) stage3Files.push({ key: "node_436", value: stage3Photo });
-    if (stages.stage3.thumbnailUrl) stage3Files.push({ key: "node_426", value: stages.stage3.thumbnailUrl });
-    if (stage3Files.length === 0) {
-      console.error("Stage3 must have at least one photo or thumbnailUrl");
-      setIsGenerating(false);
-      return;
-    }
-    stage3Files.forEach(({ key, value }) => {
-      selectedFiles[key] = value;
-    });
-
-    // Append selected files to FormData
-    const selectedFileKeys = Object.keys(selectedFiles);
-    console.log(selectedFiles)
-    for (const key of selectedFileKeys) {
-      await appendToFormData(formData, key, selectedFiles[key]);
-    }
-
     if (!canGenerate) {
       return;
     }
 
+    setIsGenerating(true);
+
     try {
+      const formData = new FormData();
+
+      // Stage 1: 處理模型截圖
+      if (stages.stage1.thumbnailUrl) {
+        const stage1Blob = await fetch(stages.stage1.thumbnailUrl).then(r => r.blob());
+        formData.append("node_392", new File([stage1Blob], "node_392.png", { type: "image/png" }));
+      }
+
+      // 創建一個 Promise 來處理 canvas.toBlob
+      const getCanvasBlob = (canvas: HTMLCanvasElement): Promise<Blob> => {
+        return new Promise((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob!);
+          }, 'image/png');
+        });
+      };
+
+      // Stage 2: 處理上傳的照片和畫布
+      if (stage2Photo) {
+        if (stage2Photo.startsWith('blob:')) {
+          const blob = await fetch(stage2Photo).then(r => r.blob());
+          formData.append("node_58", new File([blob], "node_58.png", { type: "image/png" }));
+        } else {
+          const blob = base64ToBlob(stage2Photo);
+          formData.append("node_58", new File([blob], "node_58.png", { type: "image/png" }));
+        }
+      }
+
+      // 處理 Stage 2 的畫布
+      if (currentStage === 'stage2' && canvasRef.current) {
+        // 創建臨時畫布來合成背景和繪圖
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasRef.current.width;
+        tempCanvas.height = canvasRef.current.height;
+        const ctx = tempCanvas.getContext('2d')!;
+
+        // 繪製背景
+        ctx.fillStyle = stageBackgroundColors.stage2;
+        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+        // 繪製畫布內容
+        ctx.drawImage(canvasRef.current, 0, 0);
+
+        // 獲取合成後的 blob
+        const blob = await getCanvasBlob(tempCanvas);
+        formData.append("node_428", new File([blob], "node_428.png", { type: "image/png" }));
+      } else if (stages.stage2.thumbnailUrl) {
+        const stage2DrawingBlob = await fetch(stages.stage2.thumbnailUrl).then(r => r.blob());
+        formData.append("node_428", new File([stage2DrawingBlob], "node_428.png", { type: "image/png" }));
+      }
+
+      // Stage 3: 處理上傳的照片和畫布
+      if (stage3Photo) {
+        if (stage3Photo.startsWith('blob:')) {
+          const blob = await fetch(stage3Photo).then(r => r.blob());
+          formData.append("node_436", new File([blob], "node_436.png", { type: "image/png" }));
+        } else {
+          const blob = base64ToBlob(stage3Photo);
+          formData.append("node_436", new File([blob], "node_436.png", { type: "image/png" }));
+        }
+      }
+
+      // 處理 Stage 3 的畫布
+      if (currentStage === 'stage3' && canvasRef.current) {
+        // 創建臨時畫布來合成背景和繪圖
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 1024; // 確保尺寸正確
+        tempCanvas.height = 1024;
+        const ctx = tempCanvas.getContext('2d')!;
+
+        // 繪製背景
+        ctx.fillStyle = stageBackgroundColors.stage3;
+        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+        // 繪製所有圖層
+        for (const layer of layers) {
+          if (layer.isVisible) {
+            ctx.globalAlpha = layer.opacity;
+            ctx.drawImage(layer.canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+          }
+        }
+        ctx.globalAlpha = 1;
+
+        // 獲取合成後的 blob
+        const blob = await getCanvasBlob(tempCanvas);
+        formData.append("node_426", new File([blob], "node_426.png", { type: "image/png" }));
+      } else if (stages.stage3.thumbnailUrl) {
+        // 如果不是當前階段，使用保存的縮圖
+        const stage3DrawingBlob = await fetch(stages.stage3.thumbnailUrl).then(r => r.blob());
+        formData.append("node_426", new File([stage3DrawingBlob], "node_426.png", { type: "image/png" }));
+      }
+
+      // 添加文字描述
+      if (stage2Text && stage2Text !== 'Describe your idea') {
+        formData.append("stage2_text", stage2Text);
+      }
+      if (stage3Text && stage3Text !== 'Describe your idea') {
+        formData.append("stage3_text", stage3Text);
+      }
+
+      // 在發送請求前檢查 FormData 內容
+      console.log('FormData contents:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
       const response = await fetch("http://localhost:5000/process-images", {
         method: "POST",
         body: formData,
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.image_url) {
         const newImageUrl = `http://localhost:5000/processed_images/${result.image_url}`;
         setGeneratedImageUrl(newImageUrl);
-        setSelectedHistoryImage(newImageUrl); // 設置新生成的圖片為選中狀態
+        setSelectedHistoryImage(newImageUrl);
         setReadonlyMode(true);
         setGeneratedImages(prev => [newImageUrl, ...prev]);
       } else {
-        console.error("Failed to process the images");
+        throw new Error('No image URL in response');
       }
+
     } catch (error) {
-      console.error("Error submitting form", error);
+      console.error("Error generating images:", error);
+      alert("Error generating images. Please check the console for details.");
     } finally {
       setIsGenerating(false);
     }
@@ -1214,7 +1248,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     setIsScaleMenuOpen(false);
   };
 
-  // 添加新的狀態來管理不同階段的文字
+  // 添加新的狀態來管不同階段的文字
   const [stage2Text, setStage2Text] = useState('Describe your idea');
   const [stage3Text, setStage3Text] = useState('Describe your idea');
 
@@ -1719,7 +1753,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     thumbnailUrl && isLayersActive && (
       <>
         {/* 預覽圖容器組 - 右側 */}
-        <div className="absolute top-[72px] right-6 flex flex-col space-y-[10px] z-50">
+        <div className="absolute top-[72px] right-4 flex flex-col space-y-[10px] z-50">
           {stagePreviewLayers[currentStage as keyof StagePreviewLayers].map((box) => (
             <div
               key={box.id}
@@ -1802,7 +1836,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
           {/* 新增按鈕 */}
           <div
-            className={`w-16 h-10 rounded-[14px] flex items-center justify-center gap-1 cursor-pointer ${!isPreviewDragging ? 'transition-colors duration-200' : ''
+            className={`w-16 h-10 rounded-[14px] flex items-center justify-center gap-1 ${!isPreviewDragging ? 'transition-colors duration-200' : ''
               } add-preview-button`}
             onClick={handleAddPreview}
             onDragOver={(e) => handlePreviewDragOver(e, '')}
@@ -1840,14 +1874,14 @@ const ContentArea: React.FC<ContentAreaProps> = ({
               >
                 <path
                   d="M16.5 9L1.5 9"
-                  stroke="#8885FF"
+                  stroke={stagePreviewLayers[currentStage as keyof StagePreviewLayers].length >= MAX_PREVIEW_LAYERS ? "#C7C7C7" : "#8885FF"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
                 <path
                   d="M9 16.5L9 1.5"
-                  stroke="#8885FF"
+                  stroke={stagePreviewLayers[currentStage as keyof StagePreviewLayers].length >= MAX_PREVIEW_LAYERS ? "#C7C7C7" : "#8885FF"}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -1990,7 +2024,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   const HideEyeIcon = () => (
     <svg
       width="20"  // 改為和 ShowResultIcon 一樣的寬度
-      height="18"  // 改為和 ShowResultIcon 一樣的高度
+      height="18"  // 改為��� ShowResultIcon 一樣的高度
       viewBox="0 0 16 14"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -2085,23 +2119,27 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       historyIndex: 0
     };
 
-    // 將新圖層添加到數組開頭
-    setLayers(prev => [newLayer, ...prev]);
-    setActiveLayerIndex(0); // 新圖層始終在頂部
-  }, [layers.length]);
-
-  // 修改圖層可見性的函數
-  const toggleLayerVisibility = (index: number) => {
     setLayers(prev => {
-      const newLayers = [...prev];
-      newLayers[index] = {
-        ...newLayers[index],
-        isVisible: !newLayers[index].isVisible
-      };
+      const newLayers = [...prev, newLayer].map((layer, index) => ({
+        ...layer,
+        name: `Layer ${index + 1}`
+      }));
+
+      // 更新當前 stage 的圖層
+      setStages(prevStages => ({
+        ...prevStages,
+        [currentStage]: {
+          ...prevStages[currentStage],
+          layers: newLayers
+        }
+      }));
+
       return newLayers;
     });
+
+    setActiveLayerIndex(layers.length);
     updateDisplayCanvas();
-  };
+  }, [layers.length, currentStage, updateDisplayCanvas]);
 
   // 修改圖層透明度的函數
   const updateLayerOpacity = (index: number, opacity: number) => {
@@ -2122,30 +2160,60 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       const newLayers = [...prev];
       const [movedLayer] = newLayers.splice(fromIndex, 1);
       newLayers.splice(toIndex, 0, movedLayer);
-      return newLayers;
+      const renamedLayers = newLayers.map((layer, index) => ({
+        ...layer,
+        name: `Layer ${index + 1}`
+      }));
+
+      // 更新當前 stage 的圖層
+      setStages(prevStages => ({
+        ...prevStages,
+        [currentStage]: {
+          ...prevStages[currentStage],
+          layers: renamedLayers
+        }
+      }));
+
+      return renamedLayers;
     });
 
     // 更新活動圖層索引
     if (activeLayerIndex === fromIndex) {
       setActiveLayerIndex(toIndex);
+    } else if (fromIndex < activeLayerIndex && toIndex >= activeLayerIndex) {
+      setActiveLayerIndex(activeLayerIndex - 1);
+    } else if (fromIndex > activeLayerIndex && toIndex <= activeLayerIndex) {
+      setActiveLayerIndex(activeLayerIndex + 1);
     }
+
     updateDisplayCanvas();
   };
 
   // 刪除圖層的函數
   const deleteLayer = (index: number) => {
-    if (layers.length <= 1) return; // 保留至少一個圖層
+    if (layers.length <= 1) return;
 
     setLayers(prev => {
       const newLayers = [...prev];
       newLayers.splice(index, 1);
-      return newLayers;
+      const renamedLayers = newLayers.map((layer, idx) => ({
+        ...layer,
+        name: `Layer ${newLayers.length - idx}`
+      }));
+
+      // 更新當前 stage 的圖層
+      setStages(prevStages => ({
+        ...prevStages,
+        [currentStage]: {
+          ...prevStages[currentStage],
+          layers: renamedLayers
+        }
+      }));
+
+      return renamedLayers;
     });
 
-    // 更新活動圖層索引
-    if (activeLayerIndex >= index) {
-      setActiveLayerIndex(Math.max(0, activeLayerIndex - 1));
-    }
+    setActiveLayerIndex(Math.max(0, activeLayerIndex - 1));
     updateDisplayCanvas();
   };
 
@@ -2534,7 +2602,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
         {/* 預覽圖列表 - 移到工具欄外面 */}
         {thumbnailUrl && isLayersActive && (
-          <div className="absolute top-[72px] right-6 flex flex-col space-y-[10px] z-50">
+          <div className="absolute top-[72px] right-4 flex flex-col space-y-[10px] z-50">
             {/* 反轉圖層順序顯示 */}
             {[...layers].reverse().map((layer, index) => (
               <div
@@ -2544,7 +2612,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                 style={{
                   outline: `3px solid ${activeLayerIndex === (layers.length - 1 - index) ? '#5C5BF0' : '#E6E5FF'}`,
                   outlineOffset: '0px',
-                  opacity: layer.isVisible ? layer.opacity : 0.5
+                  opacity: layer.opacity
                 }}
                 draggable={layers.length > 1}
                 onDragStart={(e) => handleLayerDragStart(e, layers.length - 1 - index)}
@@ -2571,20 +2639,65 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                     }
                   }}
                 />
-
-                <div className="absolute top-1 right-1 flex space-x-1">
-                  <button
-                    className="w-6 h-6 rounded-full bg-white/80 flex items-center justify-center hover:bg-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleLayerVisibility(index);
-                    }}
-                  >
-                    {layer.isVisible ? <VisibilityRoundedIcon /> : <VisibilityOffRoundedIcon />}
-                  </button>
-                </div>
               </div>
             ))}
+
+            {/* 背景顏色按鈕 */}
+            {(currentStage === 'stage2' || currentStage === 'stage3') && (
+              <div
+                className="w-16 h-10 rounded-[14px] flex items-start justify-start p-1 cursor-pointer relative overflow-hidden"
+                style={{
+                  backgroundColor: stageBackgroundColors[currentStage as 'stage2' | 'stage3'],
+                  outline: '3px solid #E6E5FF',
+                  outlineOffset: '0px'
+                }}
+              >
+                <input
+                  type="color"
+                  value={stageBackgroundColors[currentStage as 'stage2' | 'stage3']}
+                  onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                  className="absolute opacity-0 w-full h-full cursor-pointer"
+                />
+                <svg
+                  width="21"
+                  height="21"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g opacity="0.6">
+                    <circle
+                      cx="9"
+                      cy="9"
+                      r="8.5"
+                      fill="#8885FF"
+                      stroke="#E6E5FF"
+                    />
+                    <path
+                      d="M6.10345 13H11.8966C12.506 13 13 12.506 13 11.8966V6.10345C13 5.49403 12.506 5 11.8966 5H8.52941H6.10345C5.49403 5 5 5.49403 5 6.10345V11.8966C5 12.506 5.49403 13 6.10345 13Z"
+                      stroke="#E6E5FF"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12.5 5.5L5.5 12.5"
+                      stroke="#E6E5FF"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M13 9L9 13"
+                      stroke="#E6E5FF"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M9 5L5 9"
+                      stroke="#E6E5FF"
+                      strokeLinecap="round"
+                    />
+                  </g>
+                </svg>
+              </div>
+            )}
 
             {/* 新增按鈕部分保持不變 */}
             <button
@@ -2778,7 +2891,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                               url={modelUrl}
                               scale={1}
                               rotation={rotation}
-                              focalLength={focalLength} // 添加焦距參數
+                              focalLength={focalLength} // ���加焦距參數
                             />
                           </Suspense>
                           <OrbitControls
