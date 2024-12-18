@@ -61,9 +61,9 @@ type ContentAreaProps = {
 
 type StageState = {
   history: ImageData[];
-  thumbnailUrl: string | null;
+  thumbnailUrl: string | null;  // 添加 thumbnailUrl 屬性
   historyIndex: number;
-  layers: LayerData[]; // 添加圖層數組
+  layers: LayerData[];
 };
 
 // 修改 DropdownIcon 組件，調整大小
@@ -246,26 +246,30 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   });
 
   const handleStageClick = (stage: string) => {
+    // 保存當前 stage 的設置
+    if (currentStage === 'stage2' || currentStage === 'stage3') {
+      setStageSettings(prev => ({
+        ...prev,
+        [currentStage]: {
+          color: color,
+          lineWidth: lineWidth
+        }
+      }));
+    }
+
+    // 載入新 stage 的設置
+    if (stage === 'stage2' || stage === 'stage3') {
+      const settings = stageSettings[stage as 'stage2' | 'stage3'];
+      setColor(settings.color);
+      setLineWidth(settings.lineWidth);
+    }
+
+    // 其他原有的邏輯...
     if (canReset && currentStage === 'stage1') {
-      setStagesEdited((prev) => {
-        const updatedStages = { ...prev };
-        updatedStages['stage1'] = true;
-        return updatedStages;
-      });
-    }
-    if (canReset && currentStage === 'stage2') {
-      setStagesEdited((prev) => {
-        const updatedStages = { ...prev };
-        updatedStages['stage2'] = true;
-        return updatedStages;
-      });
-    }
-    if (canReset && currentStage === 'stage3') {
-      setStagesEdited((prev) => {
-        const updatedStages = { ...prev };
-        updatedStages['stage3'] = true;
-        return updatedStages;
-      });
+      setStagesEdited((prev) => ({
+        ...prev,
+        stage1: true
+      }));
     }
     setCurrentStage(stage);
   };
@@ -315,7 +319,15 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       newLayers[activeLayerIndex] = layer;
       return newLayers;
     });
-  }, [activeLayerIndex, layers]);
+
+    // 更新編輯狀態
+    if (currentStage === 'stage2' || currentStage === 'stage3') {
+      setStagesEdited(prev => ({
+        ...prev,
+        [currentStage]: true
+      }));
+    }
+  }, [activeLayerIndex, layers, currentStage]);
 
   const undo = useCallback(() => {
     if (!canUndo) return;
@@ -400,21 +412,35 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     }));
   };
   const switchStage = (newStage: string) => {
-    // 保存當前 stage 的圖層狀態
-    setStages(prev => ({
-      ...prev,
-      [currentStage]: {
-        ...prev[currentStage],
-        layers: [...layers]
-      }
-    }));
+    // 保存當前 stage 的設置
+    if (currentStage === 'stage2' || currentStage === 'stage3') {
+      setStageSettings(prev => ({
+        ...prev,
+        [currentStage]: {
+          color: color,
+          lineWidth: lineWidth
+        }
+      }));
+    }
 
     // 載入新 stage 的圖層
     const newStageLayers = stages[newStage].layers;
     setLayers(newStageLayers.length > 0 ? newStageLayers : []);
     setActiveLayerIndex(0);
 
-    // 其他原有的 stage 切換邏輯...
+    // 載入新 stage 的畫筆設置
+    if (newStage === 'stage2' || newStage === 'stage3') {
+      const settings = stageSettings[newStage as 'stage2' | 'stage3'];
+      setColor(settings.color);
+      setLineWidth(settings.lineWidth);
+    }
+
+    // 載入已保存的縮圖
+    if (stages[newStage].thumbnailUrl) {
+      setThumbnailUrl(stages[newStage].thumbnailUrl);
+    }
+
+    // 設置預設畫筆顏色和筆劃寬度
     handleStageClick(newStage);
   };
 
@@ -700,36 +726,48 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   };
 
   const clearActiveLayer = () => {
-    const activeLayer = layers[activeLayerIndex];
-    if (activeLayer) {
-      const context = activeLayer.canvas.getContext('2d');
-      if (context) {
-        clearCanvas(context);
-        updateDisplayCanvas();
-        saveToHistory();
-      }
-      if (currentStage === 'stage1') {
-        setModelUrl(null);
-        setThumbnailUrl(null);
-        setStagesEdited((prev) => {
-          const updatedStages = { ...prev };
-          updatedStages['stage1'] = false;
-          return updatedStages;
-        });
-      }
-      if (currentStage === 'stage2') {
-        setStagesEdited((prev) => {
-          const updatedStages = { ...prev };
-          updatedStages['stage2'] = false;
-          return updatedStages;
-        });
-      }
-      if (currentStage === 'stage3') {
-        setStagesEdited((prev) => {
-          const updatedStages = { ...prev };
-          updatedStages['stage3'] = false;
-          return updatedStages;
-        });
+    if (currentStage === 'stage1') {
+      // 清除模型
+      setModelUrl(null);
+      // 清除縮圖
+      setThumbnailUrl(null);
+      // 重置編輯狀態
+      setStagesEdited((prev) => ({
+        ...prev,
+        stage1: false
+      }));
+      // 重置模型位置和旋轉
+      setModelPosition({
+        x: 50,
+        y: 50,
+        width: 768,
+        height: 768,
+        scale: 1,
+        rotation: { x: 0, y: 0 }
+      });
+      setRotation({ x: 0, y: 0, z: 0 });
+    } else {
+      // 其他 stage 的清除邏輯保持不變
+      const activeLayer = layers[activeLayerIndex];
+      if (activeLayer) {
+        const context = activeLayer.canvas.getContext('2d');
+        if (context) {
+          clearCanvas(context);
+          updateDisplayCanvas();
+          saveToHistory();
+        }
+        if (currentStage === 'stage2') {
+          setStagesEdited((prev) => ({
+            ...prev,
+            stage2: false
+          }));
+        }
+        if (currentStage === 'stage3') {
+          setStagesEdited((prev) => ({
+            ...prev,
+            stage3: false
+          }));
+        }
       }
     }
   };
@@ -766,20 +804,28 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     // 圖層的 canvas 改變時，更新縮圖
 
     const generateThumbnail = async () => {
-      if (containerRef.current) {
+      if (!containerRef.current) return;
+
+      try {
         const canvas = await html2canvas(containerRef.current, {
           useCORS: true,
           backgroundColor: null,
         });
         const imgData = canvas.toDataURL("image/png");
 
+        // 保存到當前 stage
+        setStages(prev => ({
+          ...prev,
+          [currentStage]: {
+            ...prev[currentStage],
+            thumbnailUrl: imgData
+          }
+        }));
+
+        // 更新當前顯示的縮圖
         setThumbnailUrl(imgData);
-        if (currentStage === 'stage2') {
-          stages.stage2.thumbnailUrl = imgData;
-        } else if (currentStage === 'stage3') {
-          stages.stage3.thumbnailUrl = imgData;
-        }
-        // stages.stage1.thumbnailUrl = imgData;
+      } catch (error) {
+        console.error('Error generating thumbnail:', error);
       }
     };
 
@@ -887,17 +933,16 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
   const [canvasSize, setCanvasSize] = useState({ width: 200, height: 200 });
 
+  // 修改 CanvasWithThumbnail 組件
   const CanvasWithThumbnail = ({ targetRef }: { targetRef: React.RefObject<HTMLDivElement> }) => {
     useEffect(() => {
       const generateThumbnail = async () => {
         if (!targetRef.current) return;
 
         try {
-          // 直接創建一個與畫布大小相同的 canvas
           const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = 1024;  // w-96 = 384px
-          tempCanvas.height = 1024; // h-96 = 384px
-
+          tempCanvas.width = 1024;
+          tempCanvas.height = 1024;
           const ctx = tempCanvas.getContext('2d');
           if (!ctx) return;
 
@@ -905,46 +950,52 @@ const ContentArea: React.FC<ContentAreaProps> = ({
           ctx.fillStyle = '#ffffff';
           ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-          // 獲取整個畫布區域的內容
-          const mainDiv = targetRef.current;
-          const rect = mainDiv.getBoundingClientRect();
+          const threeCanvas = targetRef.current.querySelector('canvas');
 
-          // 使用 html2canvas 直接截取整個畫布區域
-          const screenshot = await html2canvas(mainDiv, {
-            backgroundColor: '#ffffff',
-            width: rect.width,
-            height: rect.height,
-            scale: 1,
-            ignoreElements: (element) => {
-              // 忽略所控制素
-              return (
-                element.classList.contains('react-rnd-resizer') ||
-                element.classList.contains('cursor-move') ||
-                element.classList.contains('react-draggable-handle') ||
-                (element as HTMLElement).style.position === 'absolute' && (
-                  (element as HTMLElement).style.left === '-7.5px' ||
-                  (element as HTMLElement).style.right === '-7.5px' ||
-                  (element as HTMLElement).style.top === '-7.5px' ||
-                  (element as HTMLElement).style.bottom === '-7.5px'
-                )
-              );
+          if (threeCanvas) {
+            // 獲取容器的實際尺寸和位置
+            const scale = modelPosition.scale || 1;
+            const width = modelPosition.width * scale;
+            const height = modelPosition.height * scale;
+            const x = modelPosition.x + width / 2;  // 計算中心點
+            const y = modelPosition.y + height / 2;
+
+            // 保存當前上下文狀態
+            ctx.save();
+
+            // 移動到旋轉中心點
+            ctx.translate(x, y);
+
+            // 應用旋轉 - 注意旋轉順序
+            // ctx.rotate(rotation.y); // 先繞 Y 軸旋轉
+            // ctx.rotate(rotation.x); // 再繞 X 軸旋轉
+            // ctx.rotate(rotation.z); // 最後繞 Z 軸旋轉
+
+            // 繪製模型，從中心點偏移
+            ctx.drawImage(
+              threeCanvas,
+              -width / 2,
+              -height / 2,
+              width,
+              height
+            );
+
+            // 恢復上下文狀態
+            ctx.restore();
+
+            const imgData = tempCanvas.toDataURL('image/png');
+            setThumbnailUrl(imgData);
+
+            // 更新當前 stage 的縮圖
+            if (currentStage === 'stage1') {
+              setStages(prev => ({
+                ...prev,
+                stage1: {
+                  ...prev.stage1,
+                  thumbnailUrl: imgData
+                }
+              }));
             }
-          });
-
-          // 將截圖繪製到我們的 canvas 上
-          ctx.drawImage(screenshot, 0, 0, tempCanvas.width, tempCanvas.height);
-
-          const imgData = tempCanvas.toDataURL('image/png');
-          setThumbnailUrl(imgData);
-
-          if (currentStage === 'stage1') {
-            setStages(prev => ({
-              ...prev,
-              stage1: {
-                ...prev.stage1,
-                thumbnailUrl: imgData
-              }
-            }));
           }
 
           tempCanvas.remove();
@@ -953,14 +1004,21 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         }
       };
 
-      const timeoutId = setTimeout(generateThumbnail, 500);
-      const intervalId = setInterval(generateThumbnail, 2000);
+      // 使用 requestAnimationFrame 來平滑更新
+      let animationFrameId: number;
+      const updateThumbnail = () => {
+        generateThumbnail();
+        animationFrameId = requestAnimationFrame(updateThumbnail);
+      };
+
+      updateThumbnail();
 
       return () => {
-        clearTimeout(timeoutId);
-        clearInterval(intervalId);
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
       };
-    }, [targetRef, currentStage]);
+    }, [targetRef, currentStage, rotation, modelPosition]);
 
     return null;
   };
@@ -1013,7 +1071,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     }
   };
 
-  // 添加新的 state 來存儲生成的圖片歷史記錄
+  // 添加��的 state 來存儲生成的圖片歷史記錄
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
 
   // 修改 generateImages 函數，在成功生成圖片後將其添加到歷史記錄中
@@ -1033,65 +1091,65 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         formData.append("node_392", new File([stage1Blob], "node_392.png", { type: "image/png" }));
       }
 
-      // 創建一個 Promise 來處理 canvas.toBlob
-      const getCanvasBlob = (canvas: HTMLCanvasElement): Promise<Blob> => {
-        return new Promise((resolve) => {
-          canvas.toBlob((blob) => {
-            resolve(blob!);
-          }, 'image/png');
-        });
-      };
-
       // Stage 2: 處理上傳的照片和畫布
-      if (stage2Photo) {
-        if (stage2Photo.startsWith('blob:')) {
-          const blob = await fetch(stage2Photo).then(r => r.blob());
-          formData.append("node_58", new File([blob], "node_58.png", { type: "image/png" }));
-        } else {
-          const blob = base64ToBlob(stage2Photo);
-          formData.append("node_58", new File([blob], "node_58.png", { type: "image/png" }));
+      if (stage2Photo || stages.stage2.thumbnailUrl) {
+        // 處理上傳的照片
+        if (stage2Photo) {
+          if (stage2Photo.startsWith('blob:')) {
+            const blob = await fetch(stage2Photo).then(r => r.blob());
+            formData.append("node_58", new File([blob], "node_58.png", { type: "image/png" }));
+          } else {
+            const blob = base64ToBlob(stage2Photo);
+            formData.append("node_58", new File([blob], "node_58.png", { type: "image/png" }));
+          }
         }
-      }
 
-      // 處理 Stage 2 的畫布
-      if (currentStage === 'stage2' && canvasRef.current) {
         // 創建臨時畫布來合成背景和繪圖
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvasRef.current.width;
-        tempCanvas.height = canvasRef.current.height;
+        tempCanvas.width = 1024;
+        tempCanvas.height = 1024;
         const ctx = tempCanvas.getContext('2d')!;
 
         // 繪製背景
         ctx.fillStyle = stageBackgroundColors.stage2;
         ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-        // 繪製畫布內容
-        ctx.drawImage(canvasRef.current, 0, 0);
+        // 如果是當前階段，使用實時畫布內容
+        if (currentStage === 'stage2') {
+          // 按順序繪製所有圖層
+          for (const layer of layers) {
+            if (layer.isVisible) {
+              ctx.globalAlpha = layer.opacity;
+              ctx.drawImage(layer.canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            }
+          }
+        } else if (stages.stage2.thumbnailUrl) {
+          // 如果不是當前階段，使用保存的縮圖
+          const img = await createImageBitmap(await fetch(stages.stage2.thumbnailUrl).then(r => r.blob()));
+          ctx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+        }
 
-        // 獲取合成後的 blob
-        const blob = await getCanvasBlob(tempCanvas);
-        formData.append("node_428", new File([blob], "node_428.png", { type: "image/png" }));
-      } else if (stages.stage2.thumbnailUrl) {
-        const stage2DrawingBlob = await fetch(stages.stage2.thumbnailUrl).then(r => r.blob());
-        formData.append("node_428", new File([stage2DrawingBlob], "node_428.png", { type: "image/png" }));
+        ctx.globalAlpha = 1;
+        const blob = await new Promise<Blob>(resolve => tempCanvas.toBlob(blob => resolve(blob!), 'image/png'));
+        formData.append("node_460", new File([blob], "node_460.png", { type: "image/png" }));
       }
 
       // Stage 3: 處理上傳的照片和畫布
-      if (stage3Photo) {
-        if (stage3Photo.startsWith('blob:')) {
-          const blob = await fetch(stage3Photo).then(r => r.blob());
-          formData.append("node_436", new File([blob], "node_436.png", { type: "image/png" }));
-        } else {
-          const blob = base64ToBlob(stage3Photo);
-          formData.append("node_436", new File([blob], "node_436.png", { type: "image/png" }));
+      if (stage3Photo || stages.stage3.thumbnailUrl) {
+        // 處理上傳的照片
+        if (stage3Photo) {
+          if (stage3Photo.startsWith('blob:')) {
+            const blob = await fetch(stage3Photo).then(r => r.blob());
+            formData.append("node_436", new File([blob], "node_436.png", { type: "image/png" }));
+          } else {
+            const blob = base64ToBlob(stage3Photo);
+            formData.append("node_436", new File([blob], "node_436.png", { type: "image/png" }));
+          }
         }
-      }
 
-      // 處理 Stage 3 的畫布
-      if (currentStage === 'stage3' && canvasRef.current) {
         // 創建臨時畫布來合成背景和繪圖
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = 1024; // 確保尺寸正確
+        tempCanvas.width = 1024;
         tempCanvas.height = 1024;
         const ctx = tempCanvas.getContext('2d')!;
 
@@ -1099,22 +1157,24 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         ctx.fillStyle = stageBackgroundColors.stage3;
         ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-        // 繪製所有圖層
-        for (const layer of layers) {
-          if (layer.isVisible) {
-            ctx.globalAlpha = layer.opacity;
-            ctx.drawImage(layer.canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+        // 如果是當前階段，使用實時畫布內容
+        if (currentStage === 'stage3') {
+          // 按順序繪製所有圖層
+          for (const layer of layers) {
+            if (layer.isVisible) {
+              ctx.globalAlpha = layer.opacity;
+              ctx.drawImage(layer.canvas, 0, 0, tempCanvas.width, tempCanvas.height);
+            }
           }
+        } else if (stages.stage3.thumbnailUrl) {
+          // 如果不是當前階段，使用保存的縮圖
+          const img = await createImageBitmap(await fetch(stages.stage3.thumbnailUrl).then(r => r.blob()));
+          ctx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
         }
-        ctx.globalAlpha = 1;
 
-        // 獲取合成後的 blob
-        const blob = await getCanvasBlob(tempCanvas);
-        formData.append("node_426", new File([blob], "node_426.png", { type: "image/png" }));
-      } else if (stages.stage3.thumbnailUrl) {
-        // 如果不是當前階段，使用保存的縮圖
-        const stage3DrawingBlob = await fetch(stages.stage3.thumbnailUrl).then(r => r.blob());
-        formData.append("node_426", new File([stage3DrawingBlob], "node_426.png", { type: "image/png" }));
+        ctx.globalAlpha = 1;
+        const blob = await new Promise<Blob>(resolve => tempCanvas.toBlob(blob => resolve(blob!), 'image/png'));
+        formData.append("node_459", new File([blob], "node_459.png", { type: "image/png" }));
       }
 
       // 添加文字描述
@@ -1162,9 +1222,9 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   };
 
   // 修改 rotation 相關的狀態
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 });
   const [isDraggingRotate, setIsDraggingRotate] = useState(false);
-  const [startRotation, setStartRotation] = useState({ x: 0, y: 0 });
+  const [startRotation, setStartRotation] = useState({ x: 0, y: 0, z: 0 });
   const [startMousePosition, setStartMousePosition] = useState({ x: 0, y: 0 });
 
   // 修改轉控制邏輯
@@ -1176,14 +1236,17 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     setStartMousePosition({ x: e.clientX, y: e.clientY });
   };
 
+  // Function to handle rotation movement, now including z-axis
   const handleRotateMove = useCallback((e: MouseEvent) => {
     if (isDraggingRotate) {
       const deltaX = (e.clientX - startMousePosition.x) * 0.01;
       const deltaY = (e.clientY - startMousePosition.y) * 0.01;
+      const deltaZ = (e.clientX - startMousePosition.x) * 0.005; // Example for z-axis
 
       setRotation({
         x: startRotation.x + deltaY,
         y: startRotation.y + deltaX,
+        z: startRotation.z + deltaZ, // Update z-axis
       });
     }
   }, [isDraggingRotate, startMousePosition, startRotation]);
@@ -1222,7 +1285,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     e.preventDefault();
     const zoomSpeed = 0.04; // 保持原放速度
     const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
-    const newZoom = Math.min(Math.max(canvasZoom + delta, 0.2), 0.6); // 保持實際縮放範圍
+    const newZoom = Math.min(Math.max(canvasZoom + delta, 0.2), 0.6); // 保持實際縮放範���
     setCanvasZoom(newZoom);
     // 將實際縮放值 0.2-0.6 映射到顯示值 50-150
     const displayScale = Math.round(((newZoom - 0.2) / 0.4) * 100 + 50);
@@ -1461,8 +1524,8 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
   // 修改背景顏色狀態只保留 stage2 和 stage3
   const [stageBackgroundColors, setStageBackgroundColors] = useState({
-    stage2: '#FFFFFF',
-    stage3: '#FFFFFF'
+    stage2: '#000000', // 改為黑色
+    stage3: '#000000'
   });
 
   // 在顏色選擇器的 onChange 事件中更新對應 stage 的背景顏色
@@ -1577,7 +1640,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     setIsPreviewDragging(true);
     setDraggedPreviewIndex(box.id);
 
-    // 設置新增按鈕的拖曳狀態樣式
+    // ���置新增按鈕的拖曳狀態樣式
     requestAnimationFrame(() => {
       const addButton = document.querySelector('.add-preview-button') as HTMLElement;
       if (addButton) {
@@ -1894,7 +1957,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     )
   }
 
-  // 在 state 部分添加新的狀態
+  // 在 state 部分添加��的狀態
   const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(null);
 
   // 添加新的點擊處理函數
@@ -2335,7 +2398,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     }
   };
 
-  // 初始化時創建第一個圖層
+  // 初始化時創建���一個圖層
   useEffect(() => {
     if (containerRef.current && !isInitialized) {
       createNewLayer();
@@ -2374,6 +2437,128 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       }
     });
   }, [layers]);
+
+  // 添加新的 interface 來定義模型位置和大小的類型
+  interface ModelPosition {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    scale: number;
+    rotation: { x: number; y: number };
+  }
+
+  // 在 ContentArea 組件中添加新的 state
+  const [modelPosition, setModelPosition] = useState<ModelPosition>({
+    x: 50,
+    y: 50,
+    width: 768,
+    height: 768,
+    scale: 1,
+    rotation: { x: 0, y: 0 }
+  });
+
+  // 修改 StyledRnd 組件的部分
+  <StyledRnd
+    default={{
+      x: modelPosition.x,
+      y: modelPosition.y,
+      width: modelPosition.width,
+      height: modelPosition.height
+    }}
+    position={{ x: modelPosition.x, y: modelPosition.y }}
+    size={{ width: modelPosition.width, height: modelPosition.height }}
+    onDragStop={(e: React.DragEvent, d: { x: number; y: number }) => {
+      setModelPosition(prev => ({
+        ...prev,
+        x: d.x,
+        y: d.y
+      }));
+    }}
+    onResizeStop={(e: React.MouseEvent, direction: string, ref: HTMLElement, delta: { width: number; height: number }, position: { x: number; y: number }) => {
+      setModelPosition(prev => ({
+        ...prev,
+        width: ref.offsetWidth,
+        height: ref.offsetHeight,
+        x: position.x,
+        y: position.y
+      }));
+    }}
+  // ... 其他屬性保持不變
+  >
+    {/* ... 內部內容保持不變 ... */}
+  </StyledRnd>
+
+  // 修改 rotation 相關的處理
+  useEffect(() => {
+    setModelPosition(prev => ({
+      ...prev,
+      rotation: rotation
+    }));
+  }, [rotation]);
+
+  // 在切換 stage 時保存位置
+  useEffect(() => {
+    if (currentStage === 'stage1' && modelUrl) {
+      // 恢復保存的位置和旋轉
+      setRotation({
+        x: modelPosition.rotation.x,
+        y: modelPosition.rotation.y,
+        z: 0
+      });
+    }
+  }, [currentStage, modelUrl]);
+
+  // 在初始化時為每個 stage 創建空的縮圖
+  useEffect(() => {
+    setStages({
+      stage1: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+      stage2: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+      stage3: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+    });
+  }, []);
+
+  // 添加新的接口來定義畫筆設置
+  interface BrushSettings {
+    color: string;
+    lineWidth: number;
+  }
+
+  // 在 ContentArea 組件中添加新的 state
+  const [stageSettings, setStageSettings] = useState<{
+    stage2: BrushSettings;
+    stage3: BrushSettings;
+  }>({
+    stage2: { color: '#FFFFFF', lineWidth: 5 },
+    stage3: { color: '#FFFFFF', lineWidth: 50 }
+  });
+
+  // 修改顏色和線寬的更新處理函數
+  const handleColorChange = (newColor: string) => {
+    if (currentStage !== 'stage2' && currentStage !== 'stage3') return;
+
+    setColor(newColor);
+    setStageSettings(prev => ({
+      ...prev,
+      [currentStage]: {
+        ...prev[currentStage],
+        color: newColor
+      }
+    }));
+  };
+
+  const handleLineWidthChange = (newWidth: number) => {
+    if (currentStage !== 'stage2' && currentStage !== 'stage3') return;
+
+    setLineWidth(newWidth);
+    setStageSettings(prev => ({
+      ...prev,
+      [currentStage]: {
+        ...prev[currentStage],
+        lineWidth: newWidth
+      }
+    }));
+  };
 
   return (
     <Container $isVisible={isVisible} $isHistoryVisible={isHistoryVisible}>
@@ -2491,7 +2676,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                         <input
                           type="color"
                           value={color}
-                          onChange={(e) => setColor(e.target.value)}
+                          onChange={(e) => handleColorChange(e.target.value)}
                           className="absolute opacity-0 cursor-pointer w-full h-full"
                         />
                       </div>
@@ -2507,7 +2692,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                             value={lineWidth}
                             onChange={(e) => {
                               const value = parseInt(e.target.value);
-                              setLineWidth(value);
+                              handleLineWidthChange(value);
                             }}
                             style={{
                               background: `linear-gradient(to right, #6366F1 0%, #6366F1 ${(lineWidth - 1) / 49 * 100}%, #E5E7EB ${(lineWidth - 1) / 49 * 100}%, #E5E7EB 100%)`
@@ -2767,20 +2952,28 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                 <>
                   <StyledRnd
                     default={{
-                      x: 50,
-                      y: 50,
-                      width: 768,
-                      height: 768
+                      x: modelPosition.x,
+                      y: modelPosition.y,
+                      width: modelPosition.width,
+                      height: modelPosition.height
                     }}
-                    enableResizing={{
-                      top: true,
-                      right: true,
-                      bottom: true,
-                      left: true,
-                      topRight: true,
-                      bottomRight: true,
-                      bottomLeft: true,
-                      topLeft: true
+                    position={{ x: modelPosition.x, y: modelPosition.y }}
+                    size={{ width: modelPosition.width, height: modelPosition.height }}
+                    onDragStop={(e: React.DragEvent, d: { x: number; y: number }) => {
+                      setModelPosition(prev => ({
+                        ...prev,
+                        x: d.x,
+                        y: d.y
+                      }));
+                    }}
+                    onResizeStop={(e: React.MouseEvent, direction: string, ref: HTMLElement, delta: { width: number; height: number }, position: { x: number; y: number }) => {
+                      setModelPosition(prev => ({
+                        ...prev,
+                        width: ref.offsetWidth,
+                        height: ref.offsetHeight,
+                        x: position.x,
+                        y: position.y
+                      }));
                     }}
                     onResize={handleResize}
                     // 添加 onDrag 處理函數
@@ -3185,7 +3378,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         </div>
       </div>
 
-      {/* History 側邊欄 */}
+      {/* History 側邊�� */}
       <StyledHistorySidebar $isVisible={isHistoryVisible}>
         <div className="h-full flex flex-col">
           <div className="flex flex-col gap-2 p-3.5 overflow-y-auto scrollbar-hide">
@@ -3390,3 +3583,4 @@ const StyledHistorySidebar = styled.div<{ $isVisible: boolean }>`
 
 
 export default ContentArea;
+
