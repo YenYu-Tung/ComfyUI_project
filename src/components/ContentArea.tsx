@@ -3584,3 +3584,5 @@ const StyledHistorySidebar = styled.div<{ $isVisible: boolean }>`
 
 export default ContentArea;
 
+
+

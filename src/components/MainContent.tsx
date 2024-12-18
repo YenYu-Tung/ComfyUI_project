@@ -44,6 +44,13 @@ const MainContent: React.FC<MainContentProps> = ({
     setUploadedFiles(prev => [...prev, image]);
   };
 
+  const handleModelDelete = (urlToDelete: string) => {
+    setUploadedFiles(prevFiles =>
+      prevFiles.filter(file => file.url !== urlToDelete)
+    );
+    URL.revokeObjectURL(urlToDelete);
+  };
+
   return (
     <div className="flex-1 h-full">
       <Navbar
@@ -62,6 +69,7 @@ const MainContent: React.FC<MainContentProps> = ({
           handleFileUpload={handleFileUpload}
           uploadedFiles={uploadedFiles}
           onModelAdd={onModelAdd}
+          onModelDelete={handleModelDelete}
         />
         <ContentArea
           currentStage={currentStage}
