@@ -64,6 +64,7 @@ type StageState = {
   thumbnailUrl: string | null;  // 添加 thumbnailUrl 屬性
   historyIndex: number;
   layers: LayerData[];
+  activeLayerIndex: number; // 新增
 };
 
 // 修改 DropdownIcon 組件，調整大小
@@ -100,6 +101,13 @@ const Container = styled.div<{ $isVisible: boolean; $isHistoryVisible: boolean }
     flex-direction: column;
     transition: width 0.3s ease;
     position: relative;
+  }
+
+  // 添加新的樣式規則
+  .draggable-layer {
+    &:active {
+      opacity: 1 !important;
+    }
   }
 `;
 
@@ -246,7 +254,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   });
 
   const handleStageClick = (stage: string) => {
-    // 保存當前 stage 的設置
+    // ��存當前 stage 的設置
     if (currentStage === 'stage2' || currentStage === 'stage3') {
       setStageSettings(prev => ({
         ...prev,
@@ -393,11 +401,10 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
 
 
-
   const [stages, setStages] = useState<Record<string, StageState>>({
-    stage1: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
-    stage2: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
-    stage3: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+    stage1: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [], activeLayerIndex: 0 },
+    stage2: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [], activeLayerIndex: 0 },
+    stage3: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [], activeLayerIndex: 0 },
   });
 
   const saveCurrentStageState = (canvasHistory: ImageData[], thumbnailUrl: string | null) => {
@@ -407,26 +414,28 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         history: canvasHistory,
         thumbnailUrl: thumbnailUrl,
         historyIndex: canvasHistory.length - 1,
-        layers: [...layers]
+        layers: [...layers],
+        activeLayerIndex: activeLayerIndex // 保存當前選中的圖層索引
       },
     }));
   };
   const switchStage = (newStage: string) => {
-    // 保存當前 stage 的設置
-    if (currentStage === 'stage2' || currentStage === 'stage3') {
-      setStageSettings(prev => ({
-        ...prev,
-        [currentStage]: {
-          color: color,
-          lineWidth: lineWidth
-        }
-      }));
-    }
+    // 保存當前 stage 的狀態
+    setStages(prev => ({
+      ...prev,
+      [currentStage]: {
+        ...prev[currentStage],
+        layers: [...layers],
+        activeLayerIndex: activeLayerIndex
+      }
+    }));
 
     // 載入新 stage 的圖層
     const newStageLayers = stages[newStage].layers;
     setLayers(newStageLayers.length > 0 ? newStageLayers : []);
-    setActiveLayerIndex(0);
+
+    // 恢復新 stage 的選中圖層
+    setActiveLayerIndex(stages[newStage].activeLayerIndex);
 
     // 載入新 stage 的畫筆設置
     if (newStage === 'stage2' || newStage === 'stage3') {
@@ -933,9 +942,12 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
   const [canvasSize, setCanvasSize] = useState({ width: 200, height: 200 });
 
-  // 修改 CanvasWithThumbnail 組件
+  // ���改 CanvasWithThumbnail 組件
   const CanvasWithThumbnail = ({ targetRef }: { targetRef: React.RefObject<HTMLDivElement> }) => {
     useEffect(() => {
+      // 只在顯示預覽或正在生成時才執行
+      if (!showMainPreview && !isGenerating) return;
+
       const generateThumbnail = async () => {
         if (!targetRef.current) return;
 
@@ -953,25 +965,14 @@ const ContentArea: React.FC<ContentAreaProps> = ({
           const threeCanvas = targetRef.current.querySelector('canvas');
 
           if (threeCanvas) {
-            // 獲取容器的實際尺寸和位置
             const scale = modelPosition.scale || 1;
             const width = modelPosition.width * scale;
             const height = modelPosition.height * scale;
-            const x = modelPosition.x + width / 2;  // 計算中心點
+            const x = modelPosition.x + width / 2;
             const y = modelPosition.y + height / 2;
 
-            // 保存當前上下文狀態
             ctx.save();
-
-            // 移動到旋轉中心點
             ctx.translate(x, y);
-
-            // 應用旋轉 - 注意旋轉順序
-            // ctx.rotate(rotation.y); // 先繞 Y 軸旋轉
-            // ctx.rotate(rotation.x); // 再繞 X 軸旋轉
-            // ctx.rotate(rotation.z); // 最後繞 Z 軸旋轉
-
-            // 繪製模型，從中心點偏移
             ctx.drawImage(
               threeCanvas,
               -width / 2,
@@ -979,8 +980,6 @@ const ContentArea: React.FC<ContentAreaProps> = ({
               width,
               height
             );
-
-            // 恢復上下文狀態
             ctx.restore();
 
             const imgData = tempCanvas.toDataURL('image/png');
@@ -1004,7 +1003,6 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         }
       };
 
-      // 使用 requestAnimationFrame 來平滑更新
       let animationFrameId: number;
       const updateThumbnail = () => {
         generateThumbnail();
@@ -1018,7 +1016,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
           cancelAnimationFrame(animationFrameId);
         }
       };
-    }, [targetRef, currentStage, rotation, modelPosition]);
+    }, [targetRef, currentStage, rotation, modelPosition, showMainPreview, isGenerating]);
 
     return null;
   };
@@ -1085,7 +1083,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     try {
       const formData = new FormData();
 
-      // Stage 1: 處理模型截圖
+      // Stage 1: 使用保存的縮圖
       if (stages.stage1.thumbnailUrl) {
         const stage1Blob = await fetch(stages.stage1.thumbnailUrl).then(r => r.blob());
         formData.append("node_392", new File([stage1Blob], "node_392.png", { type: "image/png" }));
@@ -1285,7 +1283,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     e.preventDefault();
     const zoomSpeed = 0.04; // 保持原放速度
     const delta = e.deltaY > 0 ? -zoomSpeed : zoomSpeed;
-    const newZoom = Math.min(Math.max(canvasZoom + delta, 0.2), 0.6); // 保持實際縮放範���
+    const newZoom = Math.min(Math.max(canvasZoom + delta, 0.2), 0.6); // 保持實際縮放範圍
     setCanvasZoom(newZoom);
     // 將實際縮放值 0.2-0.6 映射到顯示值 50-150
     const displayScale = Math.round(((newZoom - 0.2) / 0.4) * 100 + 50);
@@ -1625,13 +1623,13 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     dragImage.style.alignItems = 'center';
     dragImage.style.justifyContent = 'center';
     dragImage.style.position = 'absolute';
-    dragImage.style.top = '-1000px'; // 將元素移出視圖
+    dragImage.style.top = '-1000px'; // 將元素移出視��
     dragImage.innerHTML = `<span style="font-size: 24px; color: #8885FF; font-family: 'Chillax-Medium'">${box.number}</span>`;
 
     document.body.appendChild(dragImage);
-    e.dataTransfer.setDragImage(dragImage, 32, 32);
+    e.dataTransfer.setDragImage(dragImage, 64, 64);
 
-    // 在下一幀移除拖曳圖像
+    // 在下一幀移除��曳圖像
     requestAnimationFrame(() => {
       document.body.removeChild(dragImage);
     });
@@ -1772,7 +1770,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   };
 
   // 新的狀態來控制主預覽圖的顯示
-  const [showMainPreview, setShowMainPreview] = useState(true);
+  const [showMainPreview, setShowMainPreview] = useState(false);
 
   // 添加鍵盤事件監聽
   useEffect(() => {
@@ -2022,7 +2020,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   // 添加 History 側邊欄的狀態
-  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+  const [isHistoryVisible, setIsHistoryVisible] = useState(true);
 
   // 更新點擊理函
   const handleHistoryClick = () => {
@@ -2252,7 +2250,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     updateDisplayCanvas();
   };
 
-  // 刪除圖層的函數
+  // 修改 deleteLayer 函數
   const deleteLayer = (index: number) => {
     if (layers.length <= 1) return;
 
@@ -2278,12 +2276,96 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
     setActiveLayerIndex(Math.max(0, activeLayerIndex - 1));
     updateDisplayCanvas();
+
+    // 重置拖曳相關的狀態
+    setIsDraggingLayer(false);
+    setIsOverAddButton(false);
   };
 
   // 添加圖層拖拽相關的處理函數
   const handleLayerDragStart = (e: React.DragEvent, index: number) => {
     e.stopPropagation();
+    // 禁用默認拖曳預覽
+    e.dataTransfer.setDragImage(new Image(), 0, 0);
     e.dataTransfer.setData('layerIndex', index.toString());
+
+    // 創建自定義拖曳圖像容器，增加 padding 來容納外框
+    const dragImage = document.createElement('div');
+    const padding = 6;
+    dragImage.style.width = `${64 + padding * 2}px`;
+    dragImage.style.height = `${64 + padding * 2}px`;
+    dragImage.style.position = 'absolute';
+    dragImage.style.top = '-1000px';
+    dragImage.style.padding = `${padding}px`;
+    dragImage.style.backgroundColor = 'transparent';
+
+    // 創建內部容器來放置 canvas
+    const innerContainer = document.createElement('div');
+    innerContainer.style.width = '64px';
+    innerContainer.style.height = '64px';
+    innerContainer.style.borderRadius = '14px';
+    innerContainer.style.overflow = 'hidden';
+    // 根據是否為當前選中的圖層設置邊框顏色
+    const isActive = activeLayerIndex === index;
+    innerContainer.style.outline = `3px solid ${isActive ? '#5C5BF0' : '#E6E5FF'}`;
+    innerContainer.style.outlineOffset = '0px';
+    innerContainer.style.backgroundColor = '#F4F4F4';
+
+    // 創建高清 canvas 並複製圖層內容
+    const canvas = document.createElement('canvas');
+    // 增加 canvas 的實際像素大小以提高畫質
+    const scale = 2; // 2倍畫質
+    canvas.width = 64 * scale;
+    canvas.height = 64 * scale;
+    canvas.style.width = '64px';
+    canvas.style.height = '64px';
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      // 設置更好的圖像渲染品質
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // 根據縮放比例調整繪製
+      ctx.scale(scale, scale);
+
+      const sourceCanvas = layers[index].canvas;
+      // 計算保持寬高比的縮放
+      const sourceAspect = sourceCanvas.width / sourceCanvas.height;
+      const targetAspect = 64 / 64;
+
+      let drawWidth = 64;
+      let drawHeight = 64;
+      let drawX = 0;
+      let drawY = 0;
+
+      if (sourceAspect > targetAspect) {
+        drawHeight = 64;
+        drawWidth = drawHeight * sourceAspect;
+        drawX = -(drawWidth - 64) / 2;
+      } else {
+        drawWidth = 64;
+        drawHeight = drawWidth / sourceAspect;
+        drawY = -(drawHeight - 64) / 2;
+      }
+
+      ctx.drawImage(sourceCanvas, drawX, drawY, drawWidth, drawHeight);
+    }
+
+    // 組裝 DOM 結構
+    innerContainer.appendChild(canvas);
+    dragImage.appendChild(innerContainer);
+    document.body.appendChild(dragImage);
+
+    // 設置拖曳圖像，考慮額外的 padding
+    e.dataTransfer.setDragImage(dragImage, 32 + padding, 32 + padding);
+
+    // 在下一幀移除拖曳圖像
+    requestAnimationFrame(() => {
+      document.body.removeChild(dragImage);
+    });
+
+    setIsDraggingLayer(true);
     const target = e.currentTarget as HTMLElement;
     target.style.opacity = '0.4';
     e.dataTransfer.effectAllowed = 'move';
@@ -2293,6 +2375,8 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     const target = e.currentTarget as HTMLElement;
     target.style.opacity = '1';
     target.style.transform = 'scale(1)';
+    setIsDraggingLayer(false);
+    setIsOverAddButton(false);
   };
 
   const handleLayerDragEnter = (e: React.DragEvent) => {
@@ -2406,7 +2490,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     }
   }, [createNewLayer, isInitialized]);
 
-  // 添加圖層狀態保存函數
+  // 添加圖��狀態保存函數
   const saveLayerState = useCallback(() => {
     if (currentStage === 'stage2' || currentStage === 'stage3') {
       setStages(prev => ({
@@ -2512,9 +2596,9 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   // 在初始化時為每個 stage 創建空的縮圖
   useEffect(() => {
     setStages({
-      stage1: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
-      stage2: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
-      stage3: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [] },
+      stage1: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [], activeLayerIndex: 0 },
+      stage2: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [], activeLayerIndex: 0 },
+      stage3: { history: [], thumbnailUrl: null, historyIndex: 0, layers: [], activeLayerIndex: 0 },
     });
   }, []);
 
@@ -2559,6 +2643,127 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       }
     }));
   };
+
+  // 修改 useEffect 來監聽模型狀態變化並自動生成縮圖
+  useEffect(() => {
+    // 只在 stage1 且有模型時執行
+    if (currentStage === 'stage1' && modelUrl && container2Ref.current) {
+      const generateThumbnail = async () => {
+        try {
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = 1024;
+          tempCanvas.height = 1024;
+          const ctx = tempCanvas.getContext('2d');
+          if (!ctx) return;
+
+          // 設置白色背景
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+          const threeCanvas = container2Ref.current?.querySelector('canvas');
+
+          if (threeCanvas) {
+            const scale = modelPosition.scale || 1;
+            const width = modelPosition.width * scale;
+            const height = modelPosition.height * scale;
+            const x = modelPosition.x + width / 2;
+            const y = modelPosition.y + height / 2;
+
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.drawImage(
+              threeCanvas,
+              -width / 2,
+              -height / 2,
+              width,
+              height
+            );
+            ctx.restore();
+
+            const imgData = tempCanvas.toDataURL('image/png');
+
+            // 更新 stage1 的縮圖
+            setStages(prev => ({
+              ...prev,
+              stage1: {
+                ...prev.stage1,
+                thumbnailUrl: imgData
+              }
+            }));
+
+            // 如果當前在 stage1,也更新當前顯示的縮圖
+            if (currentStage === 'stage1') {
+              setThumbnailUrl(imgData);
+            }
+          }
+
+          tempCanvas.remove();
+        } catch (error) {
+          console.error('Error generating thumbnail:', error);
+        }
+      };
+
+      // 使用 requestAnimationFrame 來限制更新頻率
+      let rafId: number;
+      const throttledGenerate = () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
+        rafId = requestAnimationFrame(generateThumbnail);
+      };
+
+      // 當模型狀態改變時生成縮圖
+      throttledGenerate();
+
+      return () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
+      };
+    }
+  }, [currentStage, modelUrl, modelPosition, rotation, focalLength]); // 添加所有可能影響模型外觀的依賴項
+
+  // 首先添加新的 state 來追蹤拖曳狀態
+  const [isDraggingLayer, setIsDraggingLayer] = useState(false);
+  const [isOverAddButton, setIsOverAddButton] = useState(false);
+
+  // 修改新增按鈕的 JSX 部分
+  <button
+    className={`w-16 h-10 rounded-[14px] flex items-center justify-center transition-colors duration-200 ${isDraggingLayer
+      ? isOverAddButton
+        ? 'bg-[#FF0000]'
+        : 'bg-[#FFE5E5]'
+      : layers.length >= MAX_PREVIEW_LAYERS
+        ? 'bg-[#ECECF3] cursor-not-allowed'  // 達到最大數量時的樣式
+        : 'bg-[#E6E5FF] hover:bg-[#D1D1FF] cursor-pointer'  // 正常狀態的樣式
+      }`}
+    onClick={createNewLayer}
+    disabled={layers.length >= MAX_PREVIEW_LAYERS}
+    onDragOver={(e) => {
+      e.preventDefault();
+      setIsOverAddButton(true);
+    }}
+    onDragLeave={(e) => {
+      e.preventDefault();
+      setIsOverAddButton(false);
+    }}
+    onDrop={(e) => {
+      e.preventDefault();
+      const sourceIndex = parseInt(e.dataTransfer.getData('layerIndex'));
+      if (!isNaN(sourceIndex)) {
+        deleteLayer(sourceIndex);
+      }
+      setIsOverAddButton(false);
+    }}
+  >
+    {isDraggingLayer ? (
+      <DeleteIcon color={isOverAddButton ? '#FFFFFF' : '#FF8585'} />
+    ) : (
+      <AddRoundedIcon sx={{
+        color: layers.length >= MAX_PREVIEW_LAYERS ? '#C7C7C7' : '#8885FF'
+      }} />
+    )}
+  </button>
 
   return (
     <Container $isVisible={isVisible} $isHistoryVisible={isHistoryVisible}>
@@ -2792,7 +2997,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
             {[...layers].reverse().map((layer, index) => (
               <div
                 key={layer.id}
-                className={`w-16 h-16 rounded-[14px] overflow-hidden bg-white 
+                className={`w-16 h-16 rounded-[14px] overflow-hidden bg-[#F4F4F4] draggable-layer
                   ${layers.length > 1 ? 'cursor-move' : ''} transition-transform duration-200`}
                 style={{
                   outline: `3px solid ${activeLayerIndex === (layers.length - 1 - index) ? '#5C5BF0' : '#E6E5FF'}`,
@@ -2886,11 +3091,40 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
             {/* 新增按鈕部分保持不變 */}
             <button
-              className="w-16 h-10 rounded-[14px] flex items-center justify-center bg-[#E6E5FF] hover:bg-[#D1D1FF]"
+              className={`w-16 h-10 rounded-[14px] flex items-center justify-center transition-colors duration-200 ${isDraggingLayer
+                ? isOverAddButton
+                  ? 'bg-[#FF0000]'
+                  : 'bg-[#FFE5E5]'
+                : layers.length >= MAX_PREVIEW_LAYERS
+                  ? 'bg-[#ECECF3] cursor-not-allowed'  // 達到最大數量時的樣式
+                  : 'bg-[#E6E5FF] hover:bg-[#D1D1FF] cursor-pointer'  // 正常狀態的樣式
+                }`}
               onClick={createNewLayer}
               disabled={layers.length >= MAX_PREVIEW_LAYERS}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsOverAddButton(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                setIsOverAddButton(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const sourceIndex = parseInt(e.dataTransfer.getData('layerIndex'));
+                if (!isNaN(sourceIndex)) {
+                  deleteLayer(sourceIndex);
+                }
+                setIsOverAddButton(false);
+              }}
             >
-              <AddRoundedIcon sx={{ color: '#8885FF' }} />
+              {isDraggingLayer ? (
+                <DeleteIcon color={isOverAddButton ? '#FFFFFF' : '#FF8585'} />
+              ) : (
+                <AddRoundedIcon sx={{
+                  color: layers.length >= MAX_PREVIEW_LAYERS ? '#C7C7C7' : '#8885FF'
+                }} />
+              )}
             </button>
           </div>
         )}
@@ -3084,7 +3318,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                               url={modelUrl}
                               scale={1}
                               rotation={rotation}
-                              focalLength={focalLength} // ���加焦距參數
+                              focalLength={focalLength} // 添加焦距參數
                             />
                           </Suspense>
                           <OrbitControls
@@ -3581,8 +3815,27 @@ const StyledHistorySidebar = styled.div<{ $isVisible: boolean }>`
   flex-shrink: 0;
 `;
 
+// 首先添加新的 DeleteIcon 組件
+const DeleteIcon = ({ color = '#8885FF' }) => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clipPath="url(#clip0_3390_5409)">
+      <path d="M3.48242 4.72461L4.52661 16.7328C4.63817 18.0158 5.71221 19.0005 7.00003 19.0005H12.9993C14.2871 19.0005 15.3612 18.0158 15.4727 16.7328L16.5169 4.72461" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 8V16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M12 8V16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M7.20703 4.41379V3.48276C7.20703 2.11157 8.31856 1 9.68979 1H10.3105C11.6817 1 12.7932 2.11157 12.7932 3.48276V4.41379" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M1.31055 4.72461H18.6899" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </g>
+    <defs>
+      <clipPath id="clip0_3390_5409">
+        <rect width="20" height="20" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
 
 export default ContentArea;
+
+
 
 
 

@@ -66,8 +66,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className={`${isVisible ? 'w-[194px]' : 'w-0'} h-full transition-all duration-300 bg-secondary text-black flex-none z-[100]`}>
-      {isVisible && (
+    <div className={`relative flex-none transition-all duration-300 ease-in-out ${isVisible ? 'w-[194px]' : 'w-0'} h-full bg-secondary text-black z-[100]`}>
+      <div className={`
+        absolute top-0 left-0 w-[194px] h-full
+        transition-transform duration-300 ease-in-out
+        ${isVisible ? '' : '-translate-x-[194px]'}
+      `}>
         <div className="flex flex-col h-full p-5">
           {/* Top Content: Projects, Pages, and Photo Sets */}
           <div className="overflow-auto">
@@ -219,7 +223,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <MoreHorizRoundedIcon />
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,188 +1,4 @@
 {
-  "2": {
-    "inputs": {
-      "birefnetmodel": [
-        "3",
-        0
-      ],
-      "image": [
-        "12",
-        0
-      ]
-    },
-    "class_type": "BiRefNet_Zho",
-    "_meta": {
-      "title": "🧹BiRefNet"
-    }
-  },
-  "3": {
-    "inputs": {
-      "birefnet_model": "BiRefNet-DIS_ep580.pth"
-    },
-    "class_type": "BiRefNet_ModelLoader_Zho",
-    "_meta": {
-      "title": "🧹BiRefNet Model Loader"
-    }
-  },
-  "4": {
-    "inputs": {
-      "images": [
-        "2",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "5": {
-    "inputs": {
-      "mask": [
-        "2",
-        1
-      ]
-    },
-    "class_type": "MaskPreview+",
-    "_meta": {
-      "title": "🔧 Mask Preview"
-    }
-  },
-  "6": {
-    "inputs": {
-      "panel_width": [
-        "12",
-        1
-      ],
-      "panel_height": [
-        "12",
-        2
-      ],
-      "fill_color": "white",
-      "fill_color_hex": [
-        "8",
-        1
-      ]
-    },
-    "class_type": "CR Color Panel",
-    "_meta": {
-      "title": "🌁 CR Color Panel"
-    }
-  },
-  "7": {
-    "inputs": {
-      "images": [
-        "6",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "8": {
-    "inputs": {
-      "mode": "main_color",
-      "color_of": "mask",
-      "remove_bkgd_method": "none",
-      "invert_mask": false,
-      "mask_grow": 0,
-      "image": [
-        "2",
-        0
-      ],
-      "mask": [
-        "2",
-        1
-      ]
-    },
-    "class_type": "LayerUtility: GetColorToneV2",
-    "_meta": {
-      "title": "LayerUtility: GetColorTone V2"
-    }
-  },
-  "12": {
-    "inputs": {
-      "width": 512,
-      "height": 0,
-      "upscale_method": "lanczos",
-      "keep_proportion": true,
-      "divisible_by": 32,
-      "width_input": [
-        "115",
-        0
-      ],
-      "height_input": [
-        "115",
-        1
-      ],
-      "crop": "disabled",
-      "image": [
-        "415",
-        0
-      ]
-    },
-    "class_type": "ImageResizeKJ",
-    "_meta": {
-      "title": "Resize Image"
-    }
-  },
-  "18": {
-    "inputs": {
-      "invert_mask": false,
-      "blend_mode": "normal",
-      "opacity": 100,
-      "x_percent": 50,
-      "y_percent": 50,
-      "mirror": "None",
-      "scale": 1,
-      "aspect_ratio": 1,
-      "rotate": 0,
-      "transform_method": "lanczos",
-      "anti_aliasing": 0,
-      "background_image": [
-        "6",
-        0
-      ],
-      "layer_image": [
-        "2",
-        0
-      ],
-      "layer_mask": [
-        "2",
-        1
-      ]
-    },
-    "class_type": "LayerUtility: ImageBlendAdvance V2",
-    "_meta": {
-      "title": "LayerUtility: ImageBlendAdvance V2"
-    }
-  },
-  "21": {
-    "inputs": {
-      "images": [
-        "18",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "22": {
-    "inputs": {
-      "mask": [
-        "18",
-        1
-      ]
-    },
-    "class_type": "MaskPreview+",
-    "_meta": {
-      "title": "🔧 Mask Preview"
-    }
-  },
   "50": {
     "inputs": {
       "ckpt_name": "juggernaut_final.safetensors"
@@ -223,7 +39,7 @@
   "52": {
     "inputs": {
       "text": [
-        "97",
+        "329",
         0
       ],
       "speak_and_recognation": true,
@@ -320,7 +136,7 @@
   },
   "58": {
     "inputs": {
-      "image": "FDDA.png",
+      "image": "node_58.png",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -335,7 +151,7 @@
         0
       ],
       "steps": 25,
-      "cfg": 1.5,
+      "cfg": 3,
       "sampler_name": "dpmpp_2m",
       "scheduler": "karras",
       "denoise": 0.7000000000000001,
@@ -378,51 +194,6 @@
       "title": "VAE Decode"
     }
   },
-  "64": {
-    "inputs": {
-      "images": [
-        "63",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "67": {
-    "inputs": {
-      "width": [
-        "12",
-        1
-      ],
-      "height": [
-        "12",
-        2
-      ],
-      "batch_size": 1
-    },
-    "class_type": "EmptyLatentImage",
-    "_meta": {
-      "title": "Empty Latent Image"
-    }
-  },
-  "77": {
-    "inputs": {
-      "samples": [
-        "67",
-        0
-      ],
-      "vae": [
-        "78",
-        0
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
   "78": {
     "inputs": {
       "vae_name": "vae-ft-mse-840000-ema-pruned.safetensors"
@@ -430,25 +201,6 @@
     "class_type": "VAELoader",
     "_meta": {
       "title": "Load VAE"
-    }
-  },
-  "79": {
-    "inputs": {
-      "x": 0,
-      "y": 0,
-      "resize_source": false,
-      "destination": [
-        "77",
-        0
-      ],
-      "source": [
-        "84",
-        0
-      ]
-    },
-    "class_type": "ImageCompositeMasked",
-    "_meta": {
-      "title": "ImageCompositeMasked"
     }
   },
   "83": {
@@ -461,18 +213,6 @@
     "class_type": "PreviewImage",
     "_meta": {
       "title": "Preview Image"
-    }
-  },
-  "84": {
-    "inputs": {
-      "image": [
-        "266",
-        0
-      ]
-    },
-    "class_type": "SplitImageWithAlpha",
-    "_meta": {
-      "title": "Split Image with Alpha"
     }
   },
   "85": {
@@ -510,7 +250,7 @@
         0
       ],
       "model": [
-        "187",
+        "101",
         0
       ],
       "positive": [
@@ -555,7 +295,7 @@
   "89": {
     "inputs": {
       "pixels": [
-        "18",
+        "302",
         0
       ],
       "vae": [
@@ -574,7 +314,7 @@
         "329",
         0
       ],
-      "text2": "IMG_1013.CR2:  The object is photographed from a slightly elevated, three-quarter angle, capturing both the front and top surfaces. The focal length appears to be moderate, likely around 50mm, providing a natural perspective with minimal distortion, emphasizing the object's shape and details.The background features a lush, natural setting with a variety of green foliage. Large, broad leaves are positioned towards the back, creating a dense, tropical atmosphere. In the foreground, the ground is covered with vibrant green moss, growing over uneven, rocky surfaces. A tree trunk with a textured, brown bark is visible on the right side, adding an earthy, organic element to the scene. The lighting in this scene is directed from the left side, casting a hard shadow that sharply defines the object's contours. The light is a cool white, creating a stark contrast against the deep, rich colors of the object. This interplay of light and shadow emphasizes the object's sleek form, lending it a sense of mystery and sophistication. The overall atmosphere is dramatic and focused, drawing attention to the object's elegant simplicity amidst the subdued background. film, bokeh, professional, 4k, highly detailed"
+      "text2": "IMG_1013.CR2:  The shoe is captured from a slightly elevated angle, providing a clear view of its side profile and detailing. The focal length is approximately 50mm, which creates a natural perspective, emphasizing the shoe's design features without distortion. The composition highlights the textures of the materials, such as the suede and rubber, while maintaining sharp focus on the shoe itself, ensuring a high-quality representation of the object.The background features a rich, vibrant arrangement of lush greenery, dominated by large, broad leaves that create a tropical atmosphere. The leaves are a deep green, showcasing varying textures and shades that add depth. Interspersed among the foliage are clusters of small, bright green plants, contributing to the overall lively scene. The ground is covered with a soft layer of moss, which is a vivid green, enhancing the natural, earthy feel. In the backdrop, a sturdy, textured tree trunk rises, its rough surface contrasting with the smoothness of the moss and plants. The placement of these elements creates a harmonious, organic setting that complements the main object. film, bokeh, professional, 4k, highly detailed"
     },
     "class_type": "ShowText|pysssss",
     "_meta": {
@@ -636,18 +376,6 @@
       "title": "LayerUtility: H/L Frequency Detail Restore"
     }
   },
-  "115": {
-    "inputs": {
-      "image": [
-        "415",
-        0
-      ]
-    },
-    "class_type": "CM_NearestSDXLResolution",
-    "_meta": {
-      "title": "NearestSDXLResolution"
-    }
-  },
   "119": {
     "inputs": {
       "method": "hm-mkl-hm",
@@ -700,7 +428,7 @@
   },
   "170": {
     "inputs": {
-      "model": "gpt-4o",
+      "model": "gpt-4o-mini",
       "system_prompt": "You are a professional commercial shooting photographer.",
       "caption_prompt": "Describe ONLY the background's object, material, color, placement (no lighting) in detail without main object in high quality caption.",
       "max_tokens": 300,
@@ -717,13 +445,13 @@
   },
   "171": {
     "inputs": {
-      "model": "gpt-4o",
+      "model": "gpt-4o-mini",
       "system_prompt": "You are a professional photographer.",
       "caption_prompt": "Describe ONLY the object's shooting perspective, focal length without background in high quality caption in detail.",
       "max_tokens": 300,
       "temperature": 0.5,
       "image_in": [
-        "18",
+        "392",
         0
       ]
     },
@@ -758,20 +486,6 @@
       "title": "Text"
     }
   },
-  "176": {
-    "inputs": {
-      "image_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAAXNSR0IArs4c6QAAALZJREFUKFOFkLERwjAQBPdbgBkInECGaMLUQDsE0AkRVRAYWqAByxldPPOWHwnw4OBGye1p50UDSoA+W2ABLPN7i+C5dyC6R/uiAUXRQCs0bXoNIu4QPQzAxDKxHoALOrZcqtiyR/T6CXw7+3IGHhkYcy6BOR2izwT8LptG8rbMiCRAUb+CQ6WzQVb0SNOi5Z2/nX35DRyb/ENazhpWKoGwrpD6nICp5c2qogc4of+c7QcrhgF4Aa/aoAFHiL+RAAAAAElFTkSuQmCC",
-      "refresh_rate": 500,
-      "prompt": "beautiful scenery nature glass bottle landscape,under water",
-      "slide": 0.5,
-      "seed": 0,
-      "sreen_share": null
-    },
-    "class_type": "ScreenShare",
-    "_meta": {
-      "title": "Screen Share ♾️Mixlab"
-    }
-  },
   "181": {
     "inputs": {
       "Text": "film, bokeh, professional, 4k, highly detailed"
@@ -788,12 +502,12 @@
           {
             "name": "A",
             "selected": true,
-            "url": "/api/view?filename=rgthree.compare._temp_klurl_00019_.png&type=temp&subfolder=&rand=0.6278703722046044"
+            "url": "/api/view?filename=rgthree.compare._temp_gvoyy_00013_.png&type=temp&subfolder=&rand=0.4964691945573314"
           },
           {
             "name": "B",
             "selected": true,
-            "url": "/api/view?filename=rgthree.compare._temp_klurl_00020_.png&type=temp&subfolder=&rand=0.5800969749496605"
+            "url": "/api/view?filename=rgthree.compare._temp_gvoyy_00014_.png&type=temp&subfolder=&rand=0.05983247002669789"
           }
         ]
       },
@@ -811,66 +525,6 @@
       "title": "Image Comparer (rgthree)"
     }
   },
-  "187": {
-    "inputs": {
-      "weight": 1,
-      "weight_type": "strong style transfer",
-      "combine_embeds": "concat",
-      "start_at": 0,
-      "end_at": 1,
-      "embeds_scaling": "K+mean(V) w/ C penalty",
-      "model": [
-        "188",
-        0
-      ],
-      "ipadapter": [
-        "188",
-        1
-      ],
-      "image": [
-        "18",
-        0
-      ],
-      "attn_mask": [
-        "18",
-        1
-      ]
-    },
-    "class_type": "IPAdapterAdvanced",
-    "_meta": {
-      "title": "IPAdapter Advanced"
-    }
-  },
-  "188": {
-    "inputs": {
-      "preset": "PLUS (high strength)",
-      "model": [
-        "101",
-        0
-      ]
-    },
-    "class_type": "IPAdapterUnifiedLoader",
-    "_meta": {
-      "title": "IPAdapter Unified Loader"
-    }
-  },
-  "196": {
-    "inputs": {
-      "text1": [
-        "172",
-        0
-      ],
-      "text2": [
-        "260",
-        0
-      ],
-      "separator": " "
-    },
-    "class_type": "CR Text Concatenate",
-    "_meta": {
-      "title": "🔤 CR Text Concatenate"
-    }
-  },
   "229": {
     "inputs": {
       "images": [
@@ -881,41 +535,6 @@
     "class_type": "PreviewImage",
     "_meta": {
       "title": "Preview Image"
-    }
-  },
-  "260": {
-    "inputs": {
-      "model": "gpt-4o",
-      "system_prompt": "You are a professional photographer.",
-      "caption_prompt": "Describe the lighting's direction, type (hard or soft), COLOR, and the most important one: how it cast on the main object (dont mention what the object is), and the wholistic atmosphere in high quality caption",
-      "max_tokens": 300,
-      "temperature": 0.5,
-      "image_in": [
-        "415",
-        0
-      ]
-    },
-    "class_type": "OpenAI.CaptionImage",
-    "_meta": {
-      "title": "OpenAI.CaptionImage"
-    }
-  },
-  "266": {
-    "inputs": {
-      "width": 1024,
-      "height": 1024,
-      "upscale_method": "nearest-exact",
-      "keep_proportion": false,
-      "divisible_by": 2,
-      "crop": "disabled",
-      "image": [
-        "415",
-        0
-      ]
-    },
-    "class_type": "ImageResizeKJ",
-    "_meta": {
-      "title": "Resize Image"
     }
   },
   "271": {
@@ -944,56 +563,21 @@
       "end_at": 0.8,
       "embeds_scaling": "K+mean(V) w/ C penalty",
       "model": [
-        "278",
+        "57",
         0
       ],
       "ipadapter": [
-        "278",
+        "57",
         1
+      ],
+      "image": [
+        "436",
+        0
       ]
     },
     "class_type": "IPAdapterAdvanced",
     "_meta": {
       "title": "IPAdapter Advanced"
-    }
-  },
-  "278": {
-    "inputs": {
-      "preset": "PLUS (high strength)",
-      "model": [
-        "54",
-        1
-      ]
-    },
-    "class_type": "IPAdapterUnifiedLoader",
-    "_meta": {
-      "title": "IPAdapter Unified Loader"
-    }
-  },
-  "280": {
-    "inputs": {
-      "basic_pipe": [
-        "54",
-        0
-      ],
-      "model": [
-        "277",
-        0
-      ]
-    },
-    "class_type": "EditBasicPipe",
-    "_meta": {
-      "title": "Edit BasicPipe"
-    }
-  },
-  "288": {
-    "inputs": {
-      "image": "gfdd.png",
-      "upload": "image"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
     }
   },
   "290": {
@@ -1086,11 +670,11 @@
   "298": {
     "inputs": {
       "panel_width": [
-        "12",
+        "290",
         1
       ],
       "panel_height": [
-        "12",
+        "290",
         2
       ],
       "fill_color": "white",
@@ -1102,18 +686,6 @@
     "class_type": "CR Color Panel",
     "_meta": {
       "title": "🌁 CR Color Panel"
-    }
-  },
-  "299": {
-    "inputs": {
-      "images": [
-        "298",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
     }
   },
   "300": {
@@ -1192,20 +764,10 @@
       "title": "🔧 Mask Preview"
     }
   },
-  "314": {
-    "inputs": {
-      "text": "strong hard light from the left side",
-      "speak_and_recognation": true
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Prompt)"
-    }
-  },
   "329": {
     "inputs": {
       "text1": [
-        "196",
+        "172",
         0
       ],
       "text2": [
@@ -1219,91 +781,6 @@
       "title": "🔤 CR Text Concatenate"
     }
   },
-  "336": {
-    "inputs": {
-      "keep_high_freq": 2,
-      "erase_low_freq": 0,
-      "mask_blur": 0,
-      "image": [
-        "79",
-        0
-      ],
-      "detail_image": [
-        "302",
-        0
-      ],
-      "mask": [
-        "341",
-        0
-      ]
-    },
-    "class_type": "LayerUtility: HLFrequencyDetailRestore",
-    "_meta": {
-      "title": "LayerUtility: H/L Frequency Detail Restore"
-    }
-  },
-  "339": {
-    "inputs": {
-      "method": "hm-mkl-hm",
-      "strength": 1.5,
-      "image_ref": [
-        "79",
-        0
-      ],
-      "image_target": [
-        "336",
-        0
-      ]
-    },
-    "class_type": "ColorMatch",
-    "_meta": {
-      "title": "Color Match"
-    }
-  },
-  "340": {
-    "inputs": {
-      "mask": [
-        "341",
-        0
-      ]
-    },
-    "class_type": "MaskPreview+",
-    "_meta": {
-      "title": "🔧 Mask Preview"
-    }
-  },
-  "341": {
-    "inputs": {
-      "expand": -4,
-      "incremental_expandrate": 0,
-      "tapered_corners": true,
-      "flip_input": false,
-      "blur_radius": 0,
-      "lerp_alpha": 1,
-      "decay_factor": 1,
-      "fill_holes": false,
-      "mask": [
-        "302",
-        1
-      ]
-    },
-    "class_type": "GrowMaskWithBlur",
-    "_meta": {
-      "title": "Grow Mask With Blur"
-    }
-  },
-  "343": {
-    "inputs": {
-      "images": [
-        "339",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
   "388": {
     "inputs": {
       "ckpt_name": "epicrealism_naturalSinRC1VAE.safetensors"
@@ -1315,7 +792,10 @@
   },
   "389": {
     "inputs": {
-      "text": "hard studio light, hard shadow, cigaret lighter on the ground, purple bottom and pink top",
+      "text": [
+        "437",
+        0
+      ],
       "speak_and_recognation": true,
       "clip": [
         "388",
@@ -1359,7 +839,7 @@
   },
   "392": {
     "inputs": {
-      "image": "image 4030.png",
+      "image": "node_392.png",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -1374,7 +854,7 @@
         0
       ],
       "steps": 25,
-      "cfg": 0.2,
+      "cfg": 1,
       "sampler_name": "dpmpp_2m",
       "scheduler": "normal",
       "denoise": 0.9,
@@ -1416,29 +896,6 @@
       "title": "VAE Encode"
     }
   },
-  "395": {
-    "inputs": {
-      "shape": "circle",
-      "frames": 1,
-      "location_x": 105,
-      "location_y": 442,
-      "grow": 0,
-      "frame_width": [
-        "399",
-        1
-      ],
-      "frame_height": [
-        "399",
-        2
-      ],
-      "shape_width": 450,
-      "shape_height": 200
-    },
-    "class_type": "CreateShapeMask",
-    "_meta": {
-      "title": "Create Shape Mask"
-    }
-  },
   "396": {
     "inputs": {
       "mask": [
@@ -1451,23 +908,11 @@
       "title": "Convert Mask to Image"
     }
   },
-  "397": {
-    "inputs": {
-      "images": [
-        "391",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
   "398": {
     "inputs": {
       "model_path": "iclight_sd15_fc.safetensors",
       "model": [
-        "388",
+        "441",
         0
       ]
     },
@@ -1530,7 +975,7 @@
   },
   "403": {
     "inputs": {
-      "multiplier": 0.6,
+      "multiplier": 0.35000000000000003,
       "positive": [
         "389",
         0
@@ -1571,7 +1016,7 @@
   },
   "414": {
     "inputs": {
-      "seed": -1
+      "seed": 1006506513713574
     },
     "class_type": "Seed (rgthree)",
     "_meta": {
@@ -1669,16 +1114,6 @@
       "title": "Preview Image"
     }
   },
-  "424": {
-    "inputs": {
-      "image": "pasted/image.png",
-      "upload": "image"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
-    }
-  },
   "426": {
     "inputs": {
       "image": "Paint_426.png",
@@ -1688,24 +1123,6 @@
     "class_type": "PainterNode",
     "_meta": {
       "title": "PainterNode - 512x512"
-    }
-  },
-  "427": {
-    "inputs": {
-      "width": 512,
-      "height": 512,
-      "interpolation": "nearest",
-      "method": "keep proportion",
-      "condition": "always",
-      "multiple_of": 0,
-      "image": [
-        "426",
-        0
-      ]
-    },
-    "class_type": "ImageResize+",
-    "_meta": {
-      "title": "🔧 Image Resize"
     }
   },
   "428": {
@@ -1737,7 +1154,7 @@
         0
       ],
       "layer_image": [
-        "294",
+        "415",
         0
       ],
       "layer_mask": [
@@ -1759,7 +1176,7 @@
       "divisible_by": 2,
       "crop": "disabled",
       "image": [
-        "428",
+        "460",
         0
       ]
     },
@@ -1772,7 +1189,7 @@
     "inputs": {
       "channel": "red",
       "image": [
-        "426",
+        "459",
         0
       ]
     },
@@ -1783,7 +1200,7 @@
   },
   "436": {
     "inputs": {
-      "image": "01394b492d684fb6a2740cb5b12ed5ed.jpeg",
+      "image": "node_436.png",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -1824,7 +1241,7 @@
     "inputs": {
       "invert_mask": false,
       "blend_mode": "luminosity",
-      "opacity": 50,
+      "opacity": 25,
       "x_percent": 50,
       "y_percent": 50,
       "mirror": "None",
@@ -1886,19 +1303,27 @@
       "title": "IPAdapter Unified Loader"
     }
   },
-  "444": {
+  "459": {
     "inputs": {
-      "images": [
-        "440",
-        0
-      ]
+      "image": "node_459.png",
+      "upload": "image"
     },
-    "class_type": "PreviewImage",
+    "class_type": "LoadImage",
     "_meta": {
-      "title": "Preview Image"
+      "title": "Load Image"
     }
   },
-  "446": {
+  "460": {
+    "inputs": {
+      "image": "node_460.png",
+      "upload": "image"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "461": {
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [

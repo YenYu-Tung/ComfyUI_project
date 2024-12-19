@@ -83,7 +83,7 @@ def process_images():
     # print('Uploaded files:', request.files)  
     # 可選處理的 node_id 列表
     optional_node_ids = ['node_392', 'node_58',
-                         'node_428', 'node_436', 'node_426']
+                         'node_460', 'node_436', 'node_459']
 
     for node_id in optional_node_ids:
         if node_id in request.files:
@@ -113,7 +113,7 @@ def process_images():
             print(f"Node {node_id} not found in workflow")
 
     # 保存輸出文件
-    save_image_node = prompt_workflow["446"]
+    save_image_node = prompt_workflow["461"]
     output_image_filename = 'output'
     save_image_node["inputs"]["filename_prefix"] = output_image_filename
 

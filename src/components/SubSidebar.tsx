@@ -1,12 +1,11 @@
-import React, { useState, useRef, Suspense, useEffect } from 'react';
+import React, { useState, useRef, Suspense, useEffect, useCallback } from 'react';
 import { Group, Box3, Vector3, MeshBasicMaterial } from 'three';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { Center, OrbitControls } from '@react-three/drei';
+import { Center, OrbitControls, Html } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import UpgradeRoundedIcon from '@mui/icons-material/UpgradeRounded';
-import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import * as THREE from 'three';
 
 import styleImage from "../assets/style.jpg";
 
@@ -22,7 +21,8 @@ type SubSidebarProps = {
 
 type UploadedFile = {
   file: File;
-  url: string; // URL for the 3D model
+  url: string;
+  thumbnail?: string;
 };
 
 const CarouselRows = ({ rows }: { rows: number }) => {
@@ -89,7 +89,6 @@ const Model: React.FC<ModelProps> = ({ url }) => {
     loader.load(
       url,
       (gltf) => {
-        // Apply MeshBasicMaterial to all meshes
         gltf.scene.traverse((child: any) => {
           if (child.isMesh) {
             child.material = new MeshBasicMaterial({
@@ -100,49 +99,38 @@ const Model: React.FC<ModelProps> = ({ url }) => {
           }
         });
 
-        // Calculate weighted center based on mesh volumes
         let totalVolume = 0;
         const weightedCenter = new Vector3();
 
         gltf.scene.traverse((child: any) => {
           if (child.isMesh && child.geometry) {
-            // Get mesh bounding box
             const meshBox = new Box3().setFromObject(child);
             const meshCenter = meshBox.getCenter(new Vector3());
             const meshSize = meshBox.getSize(new Vector3());
 
-            // Calculate approximate volume of the mesh
             const volume = meshSize.x * meshSize.y * meshSize.z;
             totalVolume += volume;
 
-            // Add weighted contribution to center
             weightedCenter.add(
               meshCenter.multiplyScalar(volume)
             );
           }
         });
 
-        // Get final weighted center
         if (totalVolume > 0) {
           weightedCenter.divideScalar(totalVolume);
         }
 
-        // Calculate overall bounding box for camera positioning
         const box = new Box3().setFromObject(gltf.scene);
         const size = box.getSize(new Vector3());
 
-        // Create container group
         const modelGroup = new Group();
         modelGroup.add(gltf.scene);
-
-        // Center model using weighted center
         gltf.scene.position.sub(weightedCenter);
 
-        // 修改相機位置和角度
         const maxDim = Math.max(size.x, size.y, size.z);
         const distance = maxDim * 1.5;
 
-        // 設置相機位置在模型前方略微上方
         camera.position.set(0, distance * 0.5, distance);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
@@ -152,6 +140,15 @@ const Model: React.FC<ModelProps> = ({ url }) => {
       undefined,
       (error) => console.error("Failed to load model:", error)
     );
+
+    return () => {
+      if (model) {
+        model.traverse((obj: any) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) obj.material.dispose();
+        });
+      }
+    };
   }, [url, camera]);
 
   return model ? (
@@ -161,7 +158,125 @@ const Model: React.FC<ModelProps> = ({ url }) => {
   ) : null;
 };
 
+const ModelScreenshot: React.FC<{ url: string; onScreenshotTaken: (thumbnail: string) => void }> = ({ url, onScreenshotTaken }) => {
+  const { camera, gl } = useThree();
+
+  useEffect(() => {
+    const loader = new GLTFLoader();
+    loader.load(
+      url,
+      (gltf) => {
+        gltf.scene.traverse((child: any) => {
+          if (child.isMesh) {
+            child.material = new MeshBasicMaterial({
+              map: child.material.map,
+              transparent: true,
+              opacity: 1,
+            });
+          }
+        });
+
+        // 設算模型的包圍盒
+        const box = new Box3().setFromObject(gltf.scene);
+        const center = box.getCenter(new Vector3());
+        const size = box.getSize(new Vector3());
+
+        // 計算合適的相機距離
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const distance = maxDim * 2;
+
+        // 設置相機位置為等角視圖（isometric view）
+        const cameraX = distance * Math.cos(Math.PI / 6) * Math.cos(Math.PI / 4);
+        const cameraY = distance * Math.sin(Math.PI / 6);
+        const cameraZ = distance * Math.cos(Math.PI / 6) * Math.sin(Math.PI / 4);
+
+        // 將模型置於中心
+        gltf.scene.position.sub(center);
+
+        // 設置相機
+        camera.position.set(cameraX, cameraY, cameraZ);
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+
+        // 添加燈光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(cameraX, cameraY, cameraZ);
+        gltf.scene.add(ambientLight, directionalLight);
+
+        // 渲染並截圖
+        gl.render(gltf.scene, camera);
+        const screenshot = gl.domElement.toDataURL('image/png');
+        onScreenshotTaken(screenshot);
+
+        // 清理燈光
+        gltf.scene.remove(ambientLight, directionalLight);
+      },
+      undefined,
+      (error) => console.error("Failed to load model:", error)
+    );
+  }, [url, camera, gl, onScreenshotTaken]);
+
+  return null;
+};
+
+const GenerateIcon = () => (
+  <svg
+    width="16"
+    height="18"
+    viewBox="0 0 14 15"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M2.91357 5.81957C3.05736 5.81957 3.15574 5.72119 3.17087 5.58497C3.44331 3.56439 3.51142 3.56439 5.60011 3.1633C5.72876 3.1406 5.82714 3.04979 5.82714 2.906C5.82714 2.76978 5.72876 2.6714 5.60011 2.65627C3.51142 2.36113 3.43574 2.29302 3.17087 0.242167C3.15574 0.0983803 3.05736 0 2.91357 0C2.77735 0 2.67897 0.0983803 2.65627 0.249735C2.4141 2.27031 2.30058 2.26275 0.227031 2.65627C0.0983803 2.67897 0 2.76978 0 2.906C0 3.05736 0.0983803 3.1406 0.257302 3.1633C2.31572 3.49628 2.4141 3.54926 2.65627 5.56984C2.67897 5.72119 2.77735 5.81957 2.91357 5.81957Z"
+      fill="currentColor"
+    />
+    <path
+      d="M8.04368 14.1892C8.24044 14.1892 8.38423 14.0454 8.42207 13.8411C8.95937 9.70152 9.54209 9.06583 13.6438 8.61176C13.8557 8.58906 13.9995 8.43771 13.9995 8.23338C13.9995 8.03662 13.8557 7.88526 13.6438 7.86256C9.54209 7.4085 8.95937 6.77281 8.42207 2.6257C8.38423 2.42138 8.24044 2.28516 8.04368 2.28516C7.84692 2.28516 7.70313 2.42138 7.67286 2.6257C7.13556 6.77281 6.54527 7.4085 2.45114 7.86256C2.23168 7.88526 2.08789 8.03662 2.08789 8.23338C2.08789 8.43771 2.23168 8.58906 2.45114 8.61176C6.53771 9.14907 7.10528 9.70152 7.67286 13.8411C7.70313 14.0454 7.84692 14.1892 8.04368 14.1892Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg
+    width="15"
+    height="15"
+    viewBox="0 0 15 15"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M1 9.04297C1.41421 9.04297 1.75 9.37876 1.75 9.79297V11.1119C1.75 12.1546 2.59525 12.9999 3.63793 12.9999H11.1121C12.1548 12.9999 13 12.1546 13 11.1119V9.79297C13 9.37876 13.3358 9.04297 13.75 9.04297C14.1642 9.04297 14.5 9.37876 14.5 9.79297V11.1119C14.5 12.9831 12.9832 14.4999 11.1121 14.4999H3.63793C1.76684 14.4999 0.25 12.9831 0.25 11.1119V9.79297C0.25 9.37876 0.585786 9.04297 1 9.04297Z"
+      fill="currentColor"
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M7.375 10.1035C6.96079 10.1035 6.625 9.76773 6.625 9.35352L6.625 1.00007C6.625 0.585854 6.96079 0.250068 7.375 0.250068C7.78921 0.250068 8.125 0.585855 8.125 1.00007L8.125 9.35352C8.125 9.76773 7.78921 10.1035 7.375 10.1035Z"
+      fill="currentColor"
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M10.7428 4.62772C10.4392 4.90957 9.96468 4.89199 9.68282 4.58846L7.37466 2.10275L5.0665 4.58846C4.78464 4.89199 4.31009 4.90957 4.00656 4.62772C3.70303 4.34586 3.68545 3.87132 3.96731 3.56778L6.82507 0.490197C6.96697 0.337372 7.16611 0.250535 7.37466 0.250535C7.58321 0.250535 7.78235 0.337372 7.92425 0.490197L10.782 3.56778C11.0639 3.87132 11.0463 4.34586 10.7428 4.62772Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, currentStage, handleFileUpload, uploadedFiles, onModelAdd, onModelDelete }) => {
+  const [screenshotUrls, setScreenshotUrls] = useState<{ [key: string]: string }>({});
+
+  const handleScreenshotTaken = useCallback((url: string, thumbnail: string) => {
+    setScreenshotUrls(prev => ({
+      ...prev,
+      [url]: thumbnail
+    }));
+  }, []);
 
   const handleDragStart = (event: React.DragEvent, url: string) => {
     event.dataTransfer.setData("modelUrl", url);
@@ -191,7 +306,7 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
           ${isVisible ? '' : '-translate-x-[370px]'}
         `}
       >
-        <div className="w-full h-full overflow-auto">
+        <div className="w-full h-full overflow-auto scrollbar-hide">
           {currentStage === 'stage1' && (
             <>
               <div className="py-4 px-4">
@@ -209,13 +324,13 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                   />
                 </div>
 
-                <button className="w-full h-11 rounded-[10px] flex justify-center items-center gap-2 bg-tint text-primary Chillax-Medium">
-                  <AutoAwesomeRoundedIcon sx={{ fontSize: '16px' }} />
+                <button className="w-full h-11 rounded-[10px] flex justify-center items-center gap-3 bg-tint text-primary Chillax-Medium">
+                  <GenerateIcon />
                   AI 3D Generate
                 </button>
 
-                <label className="w-full h-11 rounded-[10px] flex justify-center items-center gap-1 bg-primary text-secondary Chillax-Medium cursor-pointer">
-                  <UpgradeRoundedIcon sx={{ fontSize: '24px' }} />
+                <label className="w-full h-11 rounded-[10px] flex justify-center items-center gap-3 bg-primary text-secondary Chillax-Medium cursor-pointer">
+                  <UploadIcon />
                   Upload Your Object
                   <input
                     id="upload-button"
@@ -237,31 +352,41 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                     onDragStart={(e) => handleDragStart(e, uploaded.url)}
                     onDoubleClick={() => handleDoubleClick(uploaded.url)}
                   >
-                    {/* Canvas */}
-                    <Canvas
-                      className="rounded-lg"
-                      camera={{ position: [0, 2, 5], fov: 45 }}
-                      gl={{ preserveDrawingBuffer: true }}
-                    >
-                      <ambientLight intensity={0.5} />
-                      <directionalLight position={[10, 10, 10]} intensity={1} />
-                      <Suspense fallback={null}>
-                        <Model url={uploaded.url} />
-                      </Suspense>
-                      <OrbitControls
-                        enableZoom={false}
-                        enableRotate={false}
-                        enablePan={false}
+                    {screenshotUrls[uploaded.url] ? (
+                      <img
+                        src={screenshotUrls[uploaded.url]}
+                        alt="Model preview"
+                        className="w-full h-full object-cover rounded-lg"
                       />
-                    </Canvas>
+                    ) : (
+                      <Canvas
+                        className="rounded-lg"
+                        camera={{ position: [0, 2, 5], fov: 45 }}
+                        gl={{ preserveDrawingBuffer: true }}
+                      >
+                        <ambientLight intensity={0.5} />
+                        <directionalLight position={[10, 10, 10]} intensity={1} />
+                        <Suspense fallback={null}>
+                          <ModelScreenshot
+                            url={uploaded.url}
+                            onScreenshotTaken={(thumbnail) => handleScreenshotTaken(uploaded.url, thumbnail)}
+                          />
+                        </Suspense>
+                      </Canvas>
+                    )}
 
                     {/* 刪除按鈕 */}
                     <button
                       className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#E6E5FF] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
-                        console.log('Deleting model:', uploaded.url);
                         onModelDelete(uploaded.url);
+                        // 同時清除對應的截圖
+                        setScreenshotUrls(prev => {
+                          const newUrls = { ...prev };
+                          delete newUrls[uploaded.url];
+                          return newUrls;
+                        });
                       }}
                     >
                       <svg
