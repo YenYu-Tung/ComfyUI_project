@@ -5,9 +5,27 @@ import { Center, OrbitControls, Html } from '@react-three/drei';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import * as THREE from 'three';
 
-import styleImage from "../assets/style.jpg";
+import style1Image1 from "../assets/style1/image1.png";
+import style1Image2 from "../assets/style1/image2.jpg";
+import style1Image3 from "../assets/style1/image3.png";
+import style1Image4 from "../assets/style1/image4.png";
+
+import style2Image1 from "../assets/style2/image1.png";
+import style2Image2 from "../assets/style2/image2.jpg";
+import style2Image3 from "../assets/style2/image3.jpg";
+import style2Image4 from "../assets/style2/image4.webp";
+
+// import stage2Style1Image1 from "../assets/stage2style1/image1.png";
+// import stage2Style2Image1 from "../assets/stage2style2/image1.png";
+// import stage2Style3Image1 from "../assets/stage2style3/image1.png";
+// import stage2Style4Image1 from "../assets/stage2style4/image1.webp";
+// import stage2Style5Image1 from "../assets/stage2style5/image1.jpg";
+
+// import stage3Style1Image1 from "../assets/stage3style1/image1.png";
+// import stage3Style1Image2 from "../assets/stage3style1/image2.png";
 
 type SubSidebarProps = {
   isVisible: boolean;
@@ -25,55 +43,135 @@ type UploadedFile = {
   thumbnail?: string;
 };
 
-const CarouselRows = ({ rows }: { rows: number }) => {
-  // 處理滑動的功能
-  const handleScrollRight = (carouselRef: React.RefObject<HTMLDivElement>) => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 200, behavior: "smooth" }); // 滑動距離調整
-    }
+// 新增：每個 Style 的資料結構
+type CarouselRowData = {
+  title: string;
+  images: string[];
+};
+
+// 更新：CarouselRows 接收 carouselData，並依照每個 style 的資料進行渲染
+function CarouselRows({
+  carouselData,
+}: {
+  carouselData: CarouselRowData[];
+}) {
+  // Handle horizontal scroll
+  const handleScrollRight = (ref: React.RefObject<HTMLDivElement>) => {
+    ref.current?.scrollBy({ left: 120, behavior: "smooth" });
+  };
+  const handleScrollLeft = (ref: React.RefObject<HTMLDivElement>) => {
+    ref.current?.scrollBy({ left: -120, behavior: "smooth" });
   };
 
   return (
     <div className="carousel-container space-y-2 py-4 px-1">
-      {Array.from({ length: rows }).map((_, rowIndex) => {
-        const carouselRef = useRef<HTMLDivElement>(null);
-
-        return (
-          <div key={rowIndex} className="carousel-row space-y-1">
-            <div className="flex items-center justify-between px-4">
-              <h2 className="text-base Chillax-Medium">Style {rowIndex + 1}</h2>
-              <button className="text-black50 text-base">View all</button>
-            </div>
-            <div className="relative">
-              <div
-                ref={carouselRef}
-                className="carousel flex gap-2 overflow-x-auto scrollbar-hide px-4"
-              >
-                {Array.from({ length: 10 }).map((_, imageIndex) => (
-                  <img
-                    key={imageIndex}
-                    src={styleImage}
-                    alt={`Image Row ${rowIndex + 1} Image ${imageIndex + 1}`}
-                    className="w-28 h-28 rounded-xl object-cover"
-                  />
-                ))}
-              </div>
-              {/* 右側模糊遮罩與按鈕 */}
-              <div className="absolute top-0 right-0 h-full w-12 bg-gradient-to-r from-transparent from-0% via-white/75 via-70% to-white to-100% flex items-center justify-end">
-                <button
-                  className="text-[#8d8d8f]"
-                  onClick={() => handleScrollRight(carouselRef)}
-                >
-                  <ChevronRightRoundedIcon fontSize="large" />
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })}
+      {carouselData.map((row, rowIndex) => (
+        <CarouselRow
+          key={rowIndex}
+          handleScrollLeft={handleScrollLeft}
+          handleScrollRight={handleScrollRight}
+          title={row.title}
+          images={row.images}
+        />
+      ))}
     </div>
   );
-};
+}
+
+function CarouselRow({
+  title,
+  images,
+  handleScrollLeft,
+  handleScrollRight,
+}: {
+  title: string;
+  images: string[];
+  handleScrollLeft: (ref: React.RefObject<HTMLDivElement>) => void;
+  handleScrollRight: (ref: React.RefObject<HTMLDivElement>) => void;
+}) {
+  const carouselRef = React.useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(false);
+
+  React.useEffect(() => {
+    const ref = carouselRef.current;
+    if (!ref) return;
+
+    const onScroll = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = ref;
+      setCanScrollLeft(scrollLeft > 0);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth);
+    };
+
+    ref.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => ref.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div className="carousel-row space-y-1">
+      <div className="flex items-center justify-between px-4">
+        <h2 className="text-base Chillax-Medium">{title}</h2>
+        <button className="text-black50 text-base">View all</button>
+      </div>
+
+      <div className="relative">
+        {canScrollLeft && (
+          <>
+            <div className="absolute top-0 left-0 w-4 h-full bg-white" />
+            <div className="absolute top-0 left-4 h-full w-12 bg-gradient-to-l from-transparent from-0% via-white/75 via-70% to-white to-100% flex items-center justify-start">
+              <button
+                className="text-[#8d8d8f]"
+                onClick={() => handleScrollLeft(carouselRef)}
+              >
+                <ChevronLeftRoundedIcon fontSize="large" />
+              </button>
+            </div>
+          </>
+        )}
+
+        <div
+          ref={carouselRef}
+          className="carousel flex gap-2 overflow-x-auto scrollbar-hide px-4"
+        >
+          {/* 如果有圖就顯示圖片 */}
+          {images.map((img, index) => (
+            <img
+              key={index}
+              src={img}
+              alt={`img-${index}`}
+              className="w-28 h-28 shrink-0 rounded-xl bg-[#F4F4F4]"
+            />
+          ))}
+
+          {/* 若圖片不足十張，就用原本的方框遞補 */}
+          {Array.from({ length: Math.max(0, 10 - images.length) }).map(
+            (_, placeholderIndex) => (
+              <div
+                key={`placeholder-${placeholderIndex}`}
+                className="w-28 h-28 shrink-0 rounded-xl bg-[#F4F4F4]"
+              />
+            )
+          )}
+        </div>
+
+        {canScrollRight && (
+          <>
+            <div className="absolute top-0 right-0 w-4 h-full bg-white" />
+            <div className="absolute top-0 right-4 h-full w-12 bg-gradient-to-r from-transparent from-0% via-white/75 via-70% to-white to-100% flex items-center justify-end">
+              <button
+                className="text-[#8d8d8f]"
+                onClick={() => handleScrollRight(carouselRef)}
+              >
+                <ChevronRightRoundedIcon fontSize="large" />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface ModelProps {
   url: string;
@@ -268,6 +366,95 @@ const UploadIcon = () => (
   </svg>
 );
 
+// 新增：在檔案最上方增加一個 defaultLocalModels，預設讀取 models 資料夾內的模型
+const defaultLocalModels = [
+  { url: 'src/assets/model/model1.glb', file: null },
+  { url: 'src/assets/model/model2.gltf', file: null },
+  // 如有更多模型可在此加入
+];
+
+// 新增：Define separate carousel data for stage2 and stage3
+const stage2CarouselData: CarouselRowData[] = [
+  {
+    title: 'Style 1',
+    images: [
+      // stage2Style1Image1,
+      // stage2Style1Image2,
+      // ... more stage2style1 images ...
+    ],
+  },
+  // ... stage2 styles 2~5 ...
+  {
+    title: 'Style 2',
+    images: [
+      // stage2Style2Image1,
+      // stage2Style1Image2,
+      // ... more stage2style1 images ...
+    ],
+  },
+
+  {
+    title: 'Style 3',
+    images: [
+      // stage2Style3Image1,
+      // stage2Style1Image2,
+      // ... more stage2style1 images ...
+    ],
+  },
+
+  {
+    title: 'Style 4',
+    images: [
+      // stage2Style4Image1,
+      // stage2Style1Image2,
+      // ... more stage2style1 images ...
+    ],
+  },
+
+  {
+    title: 'Style 5',
+    images: [
+      // stage2Style5Image1,
+      // stage2Style1Image2,
+      // ... more stage2style1 images ...
+    ],
+  },
+];
+
+const stage3CarouselData: CarouselRowData[] = [
+  {
+    title: 'Style 1',
+    images: [
+
+    ],
+  },
+  {
+    title: 'Style 2',
+    images: [
+
+    ],
+  },
+  {
+    title: 'Style 3',
+    images: [
+
+    ],
+  },
+  {
+    title: 'Style 4',
+    images: [
+
+    ],
+  },
+  {
+    title: 'Style 5',
+    images: [
+
+    ],
+  },
+  // ... stage3 styles 2~5 ...
+];
+
 const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, currentStage, handleFileUpload, uploadedFiles, onModelAdd, onModelDelete }) => {
   const [screenshotUrls, setScreenshotUrls] = useState<{ [key: string]: string }>({});
 
@@ -287,6 +474,33 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
   };
 
   const [inputText, setInputText] = useState<string>('');
+
+  // 1) 改用 useState 儲存本地模型
+  const [localModels, setLocalModels] = useState<{ url: string; file: File | null }[]>([
+    { url: 'src/assets/model/model1.glb', file: null },
+    { url: 'src/assets/model/model2.glb', file: null },
+    // 如有更多模型可在此加入
+  ]);
+
+  // 將本地模型與已上傳模型合併
+  const allModels = [...localModels, ...uploadedFiles];
+
+  // 2) 自訂模型刪除邏輯
+  const handleDeleteModel = (url: string) => {
+    // 先判斷要刪除的模型是否在 localModels
+    if (localModels.some((model) => model.url === url)) {
+      setLocalModels(prev => prev.filter(model => model.url !== url));
+    } else {
+      // 否則刪除上傳的
+      onModelDelete(url);
+    }
+    // 同步刪除在 screenshotUrls 中的預覽圖
+    setScreenshotUrls(prev => {
+      const newUrls = { ...prev };
+      delete newUrls[url];
+      return newUrls;
+    });
+  };
 
   return (
     <div
@@ -344,7 +558,7 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
               </div>
 
               <div className="p-4 grid grid-cols-3 gap-3">
-                {uploadedFiles.map((uploaded, index) => (
+                {allModels.map((uploaded, index) => (
                   <div
                     key={index}
                     className="relative w-full aspect-square border border-tint rounded-[14px] mb-4 group"
@@ -375,18 +589,12 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                       </Canvas>
                     )}
 
-                    {/* 刪除按鈕 */}
+                    {/* 刪除按鈕 - 呼叫 handleDeleteModel */}
                     <button
                       className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#E6E5FF] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onModelDelete(uploaded.url);
-                        // 同時清除對應的截圖
-                        setScreenshotUrls(prev => {
-                          const newUrls = { ...prev };
-                          delete newUrls[uploaded.url];
-                          return newUrls;
-                        });
+                        handleDeleteModel(uploaded.url);
                       }}
                     >
                       <svg
@@ -410,7 +618,7 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
             </>
           )}
 
-          {(currentStage === 'stage2' || currentStage === 'stage3') && (
+          {currentStage === 'stage2' && (
             <>
               <div className="py-4 px-4">
                 <span className="text-lg text-black Chillax-Semibold">Reference Image</span>
@@ -437,7 +645,37 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                 </button>
               </div>
 
-              <CarouselRows rows={5} />
+              <CarouselRows carouselData={stage2CarouselData} />
+            </>
+          )}
+          {currentStage === 'stage3' && (
+            <>
+              <div className="py-4 px-4">
+                <span className="text-lg text-black Chillax-Semibold">Reference Image</span>
+              </div>
+
+              <div className="px-4 flex flex-col gap-3 text-base">
+                <div className='w-full h-11 rounded-[14px] flex justify-between items-center bg-secondary border border-tint px-1'>
+                  <button
+                    className="w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 bg-primary text-tint Chillax-Medium"
+                  >
+                    Recommend
+                  </button>
+                  <button
+                    className="w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 text-black50 Chillax-Medium"
+                  >
+                    Uploaded
+                  </button>
+                </div>
+                <button
+                  className="w-full h-10 rounded-[14px] flex justify-start items-center gap-1 bg-secondary text-black50 Chillax-Medium border border-tint px-3"
+                >
+                  <SearchRoundedIcon />
+                  Search
+                </button>
+              </div>
+
+              <CarouselRows carouselData={stage3CarouselData} />
             </>
           )}
         </div>

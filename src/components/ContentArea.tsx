@@ -420,6 +420,33 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     }));
   };
   const switchStage = (newStage: string) => {
+    // 如果從 stage1 切換到其他 stage，保存當前的預覽圖
+    if (currentStage === 'stage1' && newStage !== 'stage1') {
+      const currentThumbnail = stages.stage1.thumbnailUrl;
+      if (currentThumbnail) {
+        setStages(prev => ({
+          ...prev,
+          stage1: {
+            ...prev.stage1,
+            thumbnailUrl: currentThumbnail
+          }
+        }));
+      }
+    }
+
+    // 如果切換到 stage1
+    if (newStage === 'stage1') {
+      // 檢查模型是否被修改過
+      if (!isModelModified) {
+        // 如果模型沒有被修改，使用之前保存的預覽圖
+        const savedThumbnail = stages.stage1.thumbnailUrl;
+        if (savedThumbnail) {
+          setThumbnailUrl(savedThumbnail);
+        }
+      }
+      // 如果模型被修改過，會在 useEffect 中自動生成新的預覽圖
+    }
+
     // 保存當前 stage 的狀態
     setStages(prev => ({
       ...prev,
@@ -444,30 +471,29 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       setLineWidth(settings.lineWidth);
     }
 
-    // 載入已保存的縮圖
-    if (stages[newStage].thumbnailUrl) {
-      setThumbnailUrl(stages[newStage].thumbnailUrl);
-    }
-
-    // 設置預設畫筆顏色和筆劃寬度
-    handleStageClick(newStage);
+    // 設置當前 stage
+    setCurrentStage(newStage);
   };
+
+  const CANVAS_WIDTH = 400;  // 固定畫布寬度
+  const CANVAS_HEIGHT = 400; // 固定畫布高度
 
   const initializeCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const { width, height } = container.getBoundingClientRect();
-    if (width === 0 || height === 0) return;
+    // 設置固定的畫布大小
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
 
-    // 設置畫布的實際像素大小
-    canvas.width = width;
-    canvas.height = height;
+    // 根據容器大小調整顯示比例
+    const { width, height } = container.getBoundingClientRect();
+    const scale = Math.min(width / CANVAS_WIDTH, height / CANVAS_HEIGHT);
 
     // 設置畫布的顯示大小
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
+    canvas.style.width = `${CANVAS_WIDTH * scale}px`;
+    canvas.style.height = `${CANVAS_HEIGHT * scale}px`;
 
     const context = canvas.getContext('2d');
     if (!context) return;
@@ -476,7 +502,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
     // 如果還沒有圖層，創建初始圖層
     if (layers.length === 0) {
-      const initialCanvas = createOffscreenCanvas(width, height);
+      const initialCanvas = createOffscreenCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
       const initialImageData = getCanvasImageData(initialCanvas);
 
       const initialLayer: LayerData = {
@@ -614,8 +640,13 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         context.globalCompositeOperation = 'destination-out';
       }
 
+      // 保存當前的變換狀態
       context.save();
+
+      // 應用縮放
       context.scale(canvasZoom, canvasZoom);
+
+      // 調整線寬以適應縮放
       context.lineWidth = lineWidth / canvasZoom;
 
       if (lastPoint.current) {
@@ -636,6 +667,8 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       }
 
       lastPoint.current = coords;
+
+      // 恢復變換狀態
       context.restore();
 
       if (tool === 'eraser') {
@@ -645,20 +678,14 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       updateDisplayCanvas();
     } else if (baseImageData && currentShape) {
       context.putImageData(baseImageData, 0, 0);
-
-      // 保存當前的變換狀態
       context.save();
-
-      // 應用縮放並調整線寬
       context.scale(canvasZoom, canvasZoom);
       context.lineWidth = lineWidth / canvasZoom;
 
       const shape = { ...currentShape, endX: coords.offsetX, endY: coords.offsetY };
       drawShape(shape, context);
 
-      // 恢復變換狀態
       context.restore();
-
       setCurrentShape(shape);
       updateDisplayCanvas();
     }
@@ -907,6 +934,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
 
 
+
   const [isResizable, setIsResizable] = useState<boolean>(false); // 切換拖動/縮放模式
   const [isRotating, setIsRotating] = useState<boolean>(false); // 旋轉模式
   const [longPressTimeout, setLongPressTimeout] = useState<number | null>(null);
@@ -945,7 +973,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   // ���改 CanvasWithThumbnail 組件
   const CanvasWithThumbnail = ({ targetRef }: { targetRef: React.RefObject<HTMLDivElement> }) => {
     useEffect(() => {
-      // 只在顯示預覽或正在生成時才執行
+      // 只在顯���預覽或正在生成時才執行
       if (!showMainPreview && !isGenerating) return;
 
       const generateThumbnail = async () => {
@@ -1232,6 +1260,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     setIsRotating(true);
     setStartRotation({ ...rotation });
     setStartMousePosition({ x: e.clientX, y: e.clientY });
+    setIsModelModified(true); // 添加這行
   };
 
   // Function to handle rotation movement, now including z-axis
@@ -1612,7 +1641,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   const handlePreviewDragStart = (box: { id: string, number: number }) => (e: React.DragEvent) => {
     if (stagePreviewLayers[currentStage as keyof StagePreviewLayers].length <= 1) return;
 
-    // 創建自定義拖曳圖像
+    // ���建自定義拖曳圖像
     const dragImage = document.createElement('div');
     dragImage.className = 'w-16 h-16 rounded-[14px] bg-white flex items-center justify-center';
     dragImage.style.width = '64px';
@@ -2428,7 +2457,12 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   const handleDraw = (e: React.MouseEvent) => {
     if (!isDrawing || !activeContextRef.current || !layers[activeLayerIndex]?.isVisible) return;
 
-    const coords = getAdjustedCoordinates(e);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    // 計算縮放後的座標
+    const x = (e.clientX - rect.left) / canvasZoom;
+    const y = (e.clientY - rect.top) / canvasZoom;
 
     if (tool === 'pencil' || tool === 'eraser') {
       if (tool === 'eraser') {
@@ -2441,12 +2475,16 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
       if (lastPoint.current) {
         const distance = Math.sqrt(
-          Math.pow(coords.offsetX - lastPoint.current.offsetX, 2) +
-          Math.pow(coords.offsetY - lastPoint.current.offsetY, 2)
+          Math.pow(x - lastPoint.current.offsetX, 2) +
+          Math.pow(y - lastPoint.current.offsetY, 2)
         );
 
         const steps = Math.max(Math.ceil(distance), 2);
-        const points = interpolatePoints(lastPoint.current, coords, steps);
+        const points = interpolatePoints(
+          { offsetX: lastPoint.current.offsetX, offsetY: lastPoint.current.offsetY },
+          { offsetX: x, offsetY: y },
+          steps
+        );
 
         for (let i = 1; i < points.length; i++) {
           activeContextRef.current.beginPath();
@@ -2456,7 +2494,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         }
       }
 
-      lastPoint.current = coords;
+      lastPoint.current = { offsetX: x, offsetY: y };
       activeContextRef.current.restore();
 
       if (tool === 'eraser') {
@@ -2472,7 +2510,11 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         context.scale(canvasZoom, canvasZoom);
         context.lineWidth = lineWidth / canvasZoom;
 
-        const shape = { ...currentShape, endX: coords.offsetX, endY: coords.offsetY };
+        const shape = {
+          ...currentShape,
+          endX: x,
+          endY: y
+        };
         drawShape(shape, context);
 
         context.restore();
@@ -2558,6 +2600,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         x: d.x,
         y: d.y
       }));
+      setIsModelModified(true); // 添加這行
     }}
     onResizeStop={(e: React.MouseEvent, direction: string, ref: HTMLElement, delta: { width: number; height: number }, position: { x: number; y: number }) => {
       setModelPosition(prev => ({
@@ -2567,8 +2610,92 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         x: position.x,
         y: position.y
       }));
+      setIsModelModified(true); // 添加這行
     }}
-  // ... 其他屬性保持不變
+    onResize={handleResize}
+    // 添加 onDrag 處理函數
+    onDrag={(e: React.DragEvent, d: { x: number; y: number }) => {
+      // 根據當前縮放比例調整位移
+      const adjustedX = d.x * canvasZoom;
+      const adjustedY = d.y * canvasZoom;
+      return {
+        x: adjustedX / canvasZoom,
+        y: adjustedY / canvasZoom
+      };
+    }}
+    dragGrid={[1 / canvasZoom, 1 / canvasZoom]} // 添加網格對齊以提高精確度
+    scale={canvasZoom} // 設置縮放比例
+    lockAspectRatio={true}
+    style={{
+      background: "transparent",
+      borderRadius: "0",
+      outline: isRotating ? 'none' : '6px solid #5C5BF0',
+      outlineOffset: "-2px",
+      position: "absolute",
+      transformOrigin: "center center",
+      // 移��這行，因為我們現在使用 scale prop
+      // transform: `scale(${1 / canvasZoom})`,
+      zIndex: 1,
+    }}
+    resizeHandleWrapperStyle={{
+      transformOrigin: "center center",
+      // 移除這裡的 transform scale，因為我們會直接在 handles 中處理
+      // transform: `scale(${1 / canvasZoom})`
+    }}
+    resizeHandleStyles={{
+      topLeft: {
+        width: "30px",  // 改回固定尺寸
+        height: "30px",
+        background: "white",
+        border: "5px solid #8885FF",
+        borderRadius: "25%",
+        left: "-15px",
+        top: "-15px",
+        display: isRotating ? 'none' : 'block',
+        position: "absolute",
+        zIndex: 10,
+        className: "thumbnail-exclude"
+      },
+      topRight: {
+        width: "30px",
+        height: "30px",
+        background: "white",
+        border: "5px solid #8885FF",
+        borderRadius: "25%",
+        right: "-15px",
+        top: "-15px",
+        display: isRotating ? 'none' : 'block',
+        position: "absolute",
+        zIndex: 10,
+        className: "thumbnail-exclude"
+      },
+      bottomLeft: {
+        width: "30px",
+        height: "30px",
+        background: "white",
+        border: "5px solid #8885FF",
+        borderRadius: "25%",
+        left: "-15px",
+        bottom: "-15px",
+        display: isRotating ? 'none' : 'block',
+        position: "absolute",
+        zIndex: 10,
+        className: "thumbnail-exclude"
+      },
+      bottomRight: {
+        width: "30px",
+        height: "30px",
+        background: "white",
+        border: "5px solid #8885FF",
+        borderRadius: "25%",
+        right: "-15px",
+        bottom: "-15px",
+        display: isRotating ? 'none' : 'block',
+        position: "absolute",
+        zIndex: 10,
+        className: "thumbnail-exclude"
+      }
+    }}
   >
     {/* ... 內部內容保持不變 ... */}
   </StyledRnd>
@@ -2648,6 +2775,11 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   useEffect(() => {
     // 只在 stage1 且有模型時執行
     if (currentStage === 'stage1' && modelUrl && container2Ref.current) {
+      // 如果模型沒有被修改且已有保存的預覽圖，則不生成新的預覽圖
+      if (!isModelModified && stages.stage1.thumbnailUrl) {
+        return;
+      }
+
       const generateThumbnail = async () => {
         try {
           const tempCanvas = document.createElement('canvas');
@@ -2691,7 +2823,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
               }
             }));
 
-            // 如果當前在 stage1,也更新當前顯示的縮圖
+            // 如果當前在 stage1，也更新當前顯示的縮圖
             if (currentStage === 'stage1') {
               setThumbnailUrl(imgData);
             }
@@ -2721,7 +2853,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         }
       };
     }
-  }, [currentStage, modelUrl, modelPosition, rotation, focalLength]); // 添加所有可能影響模型外觀的依賴項
+  }, [currentStage, modelUrl, modelPosition, rotation, focalLength, stages.stage1.thumbnailUrl]);
 
   // 首先添加新的 state 來追蹤拖曳狀態
   const [isDraggingLayer, setIsDraggingLayer] = useState(false);
@@ -2764,6 +2896,112 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       }} />
     )}
   </button>
+
+  // 將初始值改為 false
+  const [shapeToolsVisible, setShapeToolsVisible] = useState(false);
+
+  // 添加鍵盤事件監聽
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'x') {
+        setShapeToolsVisible(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, []);
+
+  // 首先在組件頂部添加一個 state 來追踪模型是否被修改
+  const [isModelModified, setIsModelModified] = useState(false);
+
+  // 在處理模型調整的函數中（比如 handleRotate, handleScale 等）設置狀態
+  const handleRotate = (axis: string, value: number) => {
+    setIsModelModified(true);
+    // 原有的旋轉邏輯...
+  };
+
+  // 在 stage 切換時檢查
+  const handleStageChange = (newStage: number) => {
+    if ((currentStage === '2' || currentStage === '3') && newStage === 1) {
+      if (!isModelModified) {
+        // 如果模型沒有被修改，直接切換 stage
+        setCurrentStage(newStage.toString());
+        return;
+      }
+      // 如果模型被修改了，執行原有的縮圖更新邏輯
+      // 原有的縮圖更新代碼...
+    }
+
+    // 當切換到新的 stage 時，重置修改狀態
+    setIsModelModified(false);
+    setCurrentStage(newStage.toString());
+  };
+
+  // 在 Container styled-component 後面添加新的樣式
+  const StyledContainer = styled.div`
+    @keyframes buttonBreathing {
+      0%, 100% { 
+        background-color: #8885FF; 
+        transform: scale(1);
+      }
+      50% { 
+        background-color: #5C5BF0; 
+        transform: scale(1.02);
+      }
+    }
+
+    .button-breathing {
+      animation: buttonBreathing 1.5s ease-in-out infinite;
+    }
+  `;
+
+  // 添加 LoadingDots 組件
+  const LoadingDots = () => {
+    const [dots, setDots] = useState('');
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setDots(prev => {
+          if (prev === '...') return '';
+          return prev + '.';
+        });
+      }, 500);
+
+      return () => clearInterval(interval);
+    }, []);
+
+    return <span>{dots}</span>;
+  };
+
+  // 修改按鈕部分
+  <StyledContainer>
+    <button
+      className={`w-[180px] h-[41px] rounded-[14px] flex justify-center items-center gap-3 
+      ${canGenerate
+          ? isGenerating
+            ? "button-breathing text-[#FFFFFF]"
+            : "bg-primary text-[#FFFFFF] hover:bg-[#5C5BF0] transition-colors"
+          : "bg-black50 text-white"
+        } 
+      Chillax-Medium`}
+      onClick={generateImages}
+      disabled={!canGenerate || isGenerating}
+    >
+      {!isGenerating && <GenerateIcon />}
+      <span className="min-w-[80px] text-center">
+        {isGenerating ? (
+          <span className="flex items-center justify-center">
+            Generating<LoadingDots />
+          </span>
+        ) : (
+          'Generate'
+        )}
+      </span>
+    </button>
+  </StyledContainer>
 
   return (
     <Container $isVisible={isVisible} $isHistoryVisible={isHistoryVisible}>
@@ -2924,24 +3162,28 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                     strokeWidth: 2.2
                   }}
                 />
-                <ToolButton
-                  isActive={tool === 'rectangle'}
-                  onClick={() => setTool('rectangle')}
-                  icon={Square}
-                  iconProps={{
-                    color: tool === 'rectangle' ? '#FFFFFF' : '#8885FF',
-                    strokeWidth: 2.2
-                  }}
-                />
-                <ToolButton
-                  isActive={tool === 'circle'}
-                  onClick={() => setTool('circle')}
-                  icon={Circle}
-                  iconProps={{
-                    color: tool === 'circle' ? '#FFFFFF' : '#8885FF',
-                    strokeWidth: 2.2
-                  }}
-                />
+                {shapeToolsVisible && (
+                  <>
+                    <ToolButton
+                      isActive={tool === 'rectangle'}
+                      onClick={() => setTool('rectangle')}
+                      icon={Square}
+                      iconProps={{
+                        color: tool === 'rectangle' ? '#FFFFFF' : '#8885FF',
+                        strokeWidth: 2.2
+                      }}
+                    />
+                    <ToolButton
+                      isActive={tool === 'circle'}
+                      onClick={() => setTool('circle')}
+                      icon={Circle}
+                      iconProps={{
+                        color: tool === 'circle' ? '#FFFFFF' : '#8885FF',
+                        strokeWidth: 2.2
+                      }}
+                    />
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -3138,7 +3380,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
           style={{
             backgroundImage: 'radial-gradient(circle, #d1d5db 1.2px, transparent 1px)',
             backgroundSize: '20px 20px',
-          }}  // 移除固定高度設定
+          }}  // 移除固定高度���定
         >
           {/* 左上角主預覽圖 */}
           {thumbnailUrl && showMainPreview && (
@@ -3199,6 +3441,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                         x: d.x,
                         y: d.y
                       }));
+                      setIsModelModified(true); // 添加這行
                     }}
                     onResizeStop={(e: React.MouseEvent, direction: string, ref: HTMLElement, delta: { width: number; height: number }, position: { x: number; y: number }) => {
                       setModelPosition(prev => ({
@@ -3208,6 +3451,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                         x: position.x,
                         y: position.y
                       }));
+                      setIsModelModified(true); // 添加這行
                     }}
                     onResize={handleResize}
                     // 添加 onDrag 處理函數
@@ -3373,7 +3617,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
               <canvas
                 ref={canvasRef}
                 onMouseDown={startDrawing}
-                onMouseMove={draw}
+                onMouseMove={handleDraw}
                 onMouseUp={stopDrawing}
                 onMouseLeave={handleMouseLeave}
                 onMouseEnter={handleMouseEnter}
@@ -3600,19 +3844,36 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                 {readOnlyMode ? 'Hide Result' : 'Show Result'}
               </div>
             </button>
-            <button
-              className={`w-[180px] h-[41px] rounded-[14px] flex justify-center items-center gap-3 ${canGenerate ? "bg-primary text-[#FFFFFF]" : " bg-black50 text-white"} Chillax-Medium`}
-              onClick={generateImages}
-              disabled={!canGenerate}
-            >
-              <GenerateIcon />
-              Generate
-            </button>
+            <StyledContainer>
+              <button
+                className={`w-[180px] h-[41px] rounded-[14px] flex justify-center items-center gap-3 
+                ${canGenerate
+                    ? isGenerating
+                      ? "button-breathing text-[#FFFFFF]"
+                      : "bg-primary text-[#FFFFFF] hover:bg-[#5C5BF0] transition-colors"
+                    : "bg-black50 text-white"
+                  } 
+                Chillax-Medium`}
+                onClick={generateImages}
+                disabled={!canGenerate || isGenerating}
+              >
+                {!isGenerating && <GenerateIcon />}
+                <span className="min-w-[80px] text-center">
+                  {isGenerating ? (
+                    <span className="flex items-center justify-center">
+                      Generating<LoadingDots />
+                    </span>
+                  ) : (
+                    'Generate'
+                  )}
+                </span>
+              </button>
+            </StyledContainer>
           </div>
         </div>
       </div>
 
-      {/* History 側邊�� */}
+      {/* History 側邊 */}
       <StyledHistorySidebar $isVisible={isHistoryVisible}>
         <div className="h-full flex flex-col">
           <div className="flex flex-col gap-2 p-3.5 overflow-y-auto scrollbar-hide">

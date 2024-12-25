@@ -110,7 +110,7 @@ def process_images():
             prompt_workflow[node_id]["inputs"]["image"] = file_path
             # print(f"Assigned {file_path} to node {node_id}")
         else:
-            print(f"Node {node_id} not found in workflow")
+            pass
 
     # 保存輸出文件
     save_image_node = prompt_workflow["461"]
