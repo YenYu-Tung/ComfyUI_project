@@ -57,6 +57,7 @@ type ContentAreaProps = {
   onImageGenerated: (hasImage: boolean) => void;
   generatedImageUrl: string | null;
   setGeneratedImageUrl: (url: string | null) => void;
+  selectedImage: string | null;
 };
 
 type StageState = {
@@ -223,7 +224,8 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   uploadedFiles,
   isVisible,
   generatedImageUrl,
-  setGeneratedImageUrl
+  setGeneratedImageUrl,
+  selectedImage
 }) => {
   const [modelUrl, setModelUrl] = useState<string | null>(null); // 保存拖動的模型 URL
   const [canvasScale, setCanvasScale] = useState(100); // 比例調整狀態
@@ -886,6 +888,24 @@ const ContentArea: React.FC<ContentAreaProps> = ({
       }
     }
   };
+  useEffect(() => {
+    if (currentStage === 'stage2') {
+      setStagesEdited((prev) => {
+        const updatedStages = { ...prev };
+        updatedStages['stage2'] = true;
+        return updatedStages;
+      });
+      setStage2Photo(selectedImage);
+    }
+    if (currentStage === 'stage3') {
+      setStagesEdited((prev) => {
+        const updatedStages = { ...prev };
+        updatedStages['stage3'] = true;
+        return updatedStages;
+      });
+      setStage3Photo(selectedImage);
+    }  
+  }, [selectedImage]);
 
   useEffect(() => {
     if (stage2Photo) {
@@ -2464,6 +2484,8 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     const x = (e.clientX - rect.left) / canvasZoom;
     const y = (e.clientY - rect.top) / canvasZoom;
 
+    const coords = getAdjustedCoordinates(e);
+
     if (tool === 'pencil' || tool === 'eraser') {
       if (tool === 'eraser') {
         activeContextRef.current.globalCompositeOperation = 'destination-out';
@@ -2475,16 +2497,12 @@ const ContentArea: React.FC<ContentAreaProps> = ({
 
       if (lastPoint.current) {
         const distance = Math.sqrt(
-          Math.pow(x - lastPoint.current.offsetX, 2) +
-          Math.pow(y - lastPoint.current.offsetY, 2)
+          Math.pow(coords.offsetX - lastPoint.current.offsetX, 2) +
+          Math.pow(coords.offsetY - lastPoint.current.offsetY, 2)
         );
 
         const steps = Math.max(Math.ceil(distance), 2);
-        const points = interpolatePoints(
-          { offsetX: lastPoint.current.offsetX, offsetY: lastPoint.current.offsetY },
-          { offsetX: x, offsetY: y },
-          steps
-        );
+        const points = interpolatePoints(lastPoint.current, coords, steps);
 
         for (let i = 1; i < points.length; i++) {
           activeContextRef.current.beginPath();
@@ -2494,7 +2512,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
         }
       }
 
-      lastPoint.current = { offsetX: x, offsetY: y };
+      lastPoint.current = coords;
       activeContextRef.current.restore();
 
       if (tool === 'eraser') {
@@ -2776,7 +2794,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
     // 只在 stage1 且有模型時執行
     if (currentStage === 'stage1' && modelUrl && container2Ref.current) {
       // 如果模型沒有被修改且已有保存的預覽圖，則不生成新的預覽圖
-      if (!isModelModified && stages.stage1.thumbnailUrl) {
+      if (!isModelModified) {
         return;
       }
 
@@ -2795,12 +2813,11 @@ const ContentArea: React.FC<ContentAreaProps> = ({
           const threeCanvas = container2Ref.current?.querySelector('canvas');
 
           if (threeCanvas) {
-            const scale = modelPosition.scale || 1;
+            const scale = modelPosition.scale || 1; 
             const width = modelPosition.width * scale;
             const height = modelPosition.height * scale;
             const x = modelPosition.x + width / 2;
             const y = modelPosition.y + height / 2;
-
             ctx.save();
             ctx.translate(x, y);
             ctx.drawImage(
@@ -3330,6 +3347,18 @@ const ContentArea: React.FC<ContentAreaProps> = ({
                 </svg>
               </div>
             )}
+
+            {/* {(currentStage === 'stage1') && (
+              <div
+                className={`w-16 h-16 rounded-[14px] overflow-hidden bg-[#F4F4F4]`}
+                style={{
+                  outline: `3px solid #5C5BF0`,
+                  outlineOffset: '0px'
+                }}
+              >
+                <img src={thumbnailUrl} alt="" className='w-full h-full' />
+              </div>
+            )} */}
 
             {/* 新增按鈕部分保持不變 */}
             <button

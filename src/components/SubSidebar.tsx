@@ -33,8 +33,12 @@ type SubSidebarProps = {
   currentStage: string;
   handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   uploadedFiles: any[];
+  handleImageFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  uploadedImageFiles: any[];
   onModelAdd: (url: string) => void;
   onModelDelete: (url: string) => void;
+  setUploadedImageFiles: React.Dispatch<React.SetStateAction<any[]>>;
+  setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 type UploadedFile = {
@@ -455,7 +459,7 @@ const stage3CarouselData: CarouselRowData[] = [
   // ... stage3 styles 2~5 ...
 ];
 
-const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, currentStage, handleFileUpload, uploadedFiles, onModelAdd, onModelDelete }) => {
+const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, currentStage, handleFileUpload, uploadedFiles, handleImageFileUpload, uploadedImageFiles, setUploadedImageFiles, setSelectedImage, onModelAdd, onModelDelete }) => {
   const [screenshotUrls, setScreenshotUrls] = useState<{ [key: string]: string }>({});
 
   const handleScreenshotTaken = useCallback((url: string, thumbnail: string) => {
@@ -500,6 +504,37 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
       delete newUrls[url];
       return newUrls;
     });
+  };
+
+  const [stage2ActiveButton, setstage2ActiveButton] = useState<'recommend' | 'uploaded'>('recommend');
+  const [stage3ActiveButton, setstage3ActiveButton] = useState<'recommend' | 'uploaded'>('recommend');
+
+  const [isDragging, setIsDragging] = useState(false);
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      setIsDragging(false);
+
+      const files = Array.from(event.dataTransfer.files);
+      const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+
+      const imageUrls = imageFiles.map((file) => URL.createObjectURL(file));
+      setUploadedImageFiles((prevImages) => [...prevImages, ...imageUrls]);
+    },
+    []
+  );
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleImageClick = (url: string) => {
+    setSelectedImage(url); 
   };
 
   return (
@@ -627,12 +662,16 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
               <div className="px-4 flex flex-col gap-3 text-base">
                 <div className='w-full h-11 rounded-[14px] flex justify-between items-center bg-secondary border border-tint px-1'>
                   <button
-                    className="w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 bg-primary text-tint Chillax-Medium"
+                    className={`w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 Chillax-Medium ${stage2ActiveButton === 'recommend' ? 'bg-primary text-tint' : 'text-black50'
+                      }`}
+                    onClick={() => setstage2ActiveButton('recommend')}
                   >
                     Recommend
                   </button>
                   <button
-                    className="w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 text-black50 Chillax-Medium"
+                    className={`w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 Chillax-Medium ${stage2ActiveButton === 'uploaded' ? 'bg-primary text-tint' : 'text-black50'
+                      }`}
+                    onClick={() => setstage2ActiveButton('uploaded')}
                   >
                     Uploaded
                   </button>
@@ -645,7 +684,32 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                 </button>
               </div>
 
-              <CarouselRows carouselData={stage2CarouselData} />
+              {stage2ActiveButton === 'recommend' ?
+                <CarouselRows carouselData={stage3CarouselData} />
+                :
+                <div
+                  className="p-4 w-full h-full"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  {uploadedImageFiles.length > 0 ? (
+                    <div className="flex flex-wrap gap-4">
+                      {uploadedImageFiles.map((imgUrl, index) => (
+                        <img
+                          key={index}
+                          src={imgUrl}
+                          alt={`Uploaded ${index}`}
+                          className="h-28 w-auto rounded-xl bg-[#F4F4F4]"
+                          onClick={() => handleImageClick(imgUrl)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                </div>
+              }
             </>
           )}
           {currentStage === 'stage3' && (
@@ -657,12 +721,16 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
               <div className="px-4 flex flex-col gap-3 text-base">
                 <div className='w-full h-11 rounded-[14px] flex justify-between items-center bg-secondary border border-tint px-1'>
                   <button
-                    className="w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 bg-primary text-tint Chillax-Medium"
+                    className={`w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 Chillax-Medium ${stage3ActiveButton === 'recommend' ? 'bg-primary text-tint' : 'text-black50'
+                      }`}
+                    onClick={() => setstage3ActiveButton('recommend')}
                   >
                     Recommend
                   </button>
                   <button
-                    className="w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 text-black50 Chillax-Medium"
+                    className={`w-1/2 h-8 rounded-[9px] flex justify-center items-center gap-2 Chillax-Medium ${stage3ActiveButton === 'uploaded' ? 'bg-primary text-tint' : 'text-black50'
+                      }`}
+                    onClick={() => setstage3ActiveButton('uploaded')}
                   >
                     Uploaded
                   </button>
@@ -674,8 +742,32 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                   Search
                 </button>
               </div>
-
-              <CarouselRows carouselData={stage3CarouselData} />
+              {stage3ActiveButton === 'recommend' ? 
+                <CarouselRows carouselData={stage3CarouselData} />
+                :
+                <div
+                  className="p-4 w-full h-full"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  {uploadedImageFiles.length > 0 ? (
+                    <div className="flex flex-wrap gap-4">
+                      {uploadedImageFiles.map((imgUrl, index) => (
+                        <img
+                          key={index}
+                          src={imgUrl}
+                          alt={`Uploaded ${index}`}
+                          className="h-28 w-auto rounded-xl bg-[#F4F4F4]"
+                          onClick={() => handleImageClick(imgUrl)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <></>
+                  )}
+                </div> 
+              }              
             </>
           )}
         </div>

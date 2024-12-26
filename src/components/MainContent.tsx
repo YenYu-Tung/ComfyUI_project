@@ -22,8 +22,10 @@ const MainContent: React.FC<MainContentProps> = ({
 }) => {
   const [currentStage, setCurrentStage] = useState('stage1');
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [uploadedImageFiles, setUploadedImageFiles] = useState<any[]>([]);
   const [navbarImageUrl, setNavbarImageUrl] = useState<string | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -33,6 +35,17 @@ const MainContent: React.FC<MainContentProps> = ({
         url: URL.createObjectURL(file),
       }));
       setUploadedFiles((prev) => [...prev, ...models]);
+    }
+  };
+
+  const handleImageFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const files = Array.from(event.target.files);
+      const Images = files.map((file) => ({
+        file,
+        url: URL.createObjectURL(file),
+      }));
+      setUploadedFiles((prev) => [...prev, ...Images]);
     }
   };
 
@@ -68,6 +81,10 @@ const MainContent: React.FC<MainContentProps> = ({
           currentStage={currentStage}
           handleFileUpload={handleFileUpload}
           uploadedFiles={uploadedFiles}
+          handleImageFileUpload={handleImageFileUpload}
+          uploadedImageFiles={uploadedImageFiles}
+          setUploadedImageFiles={setUploadedImageFiles}
+          setSelectedImage={setSelectedImage}
           onModelAdd={onModelAdd}
           onModelDelete={handleModelDelete}
         />
@@ -79,6 +96,7 @@ const MainContent: React.FC<MainContentProps> = ({
           onImageGenerated={handleImageGenerated}
           generatedImageUrl={generatedImageUrl}
           setGeneratedImageUrl={setGeneratedImageUrl}
+          selectedImage={selectedImage}
         />
       </div>
     </div>
