@@ -35,9 +35,11 @@ type SubSidebarProps = {
   uploadedFiles: any[];
   handleImageFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   uploadedImageFiles: any[];
+  uploadedImage3Files: any[];
   onModelAdd: (url: string) => void;
   onModelDelete: (url: string) => void;
   setUploadedImageFiles: React.Dispatch<React.SetStateAction<any[]>>;
+  setUploadedImage3Files: React.Dispatch<React.SetStateAction<any[]>>;
   setSelectedImage: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
@@ -459,7 +461,7 @@ const stage3CarouselData: CarouselRowData[] = [
   // ... stage3 styles 2~5 ...
 ];
 
-const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, currentStage, handleFileUpload, uploadedFiles, handleImageFileUpload, uploadedImageFiles, setUploadedImageFiles, setSelectedImage, onModelAdd, onModelDelete }) => {
+const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, currentStage, handleFileUpload, uploadedFiles, handleImageFileUpload, uploadedImageFiles, uploadedImage3Files, setUploadedImage3Files, setUploadedImageFiles, setSelectedImage, onModelAdd, onModelDelete }) => {
   const [screenshotUrls, setScreenshotUrls] = useState<{ [key: string]: string }>({});
 
   const handleScreenshotTaken = useCallback((url: string, thumbnail: string) => {
@@ -510,19 +512,20 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
   const [stage3ActiveButton, setstage3ActiveButton] = useState<'recommend' | 'uploaded'>('recommend');
 
   const [isDragging, setIsDragging] = useState(false);
-  const handleDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      setIsDragging(false);
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
 
-      const files = Array.from(event.dataTransfer.files);
-      const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+    const files = Array.from(event.dataTransfer.files);
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
 
-      const imageUrls = imageFiles.map((file) => URL.createObjectURL(file));
+    const imageUrls = imageFiles.map((file) => URL.createObjectURL(file));
+    if (currentStage === 'stage2') {
       setUploadedImageFiles((prevImages) => [...prevImages, ...imageUrls]);
-    },
-    []
-  );
+    } else {
+      setUploadedImage3Files((prevImages) => [...prevImages, ...imageUrls]);
+    }      
+  };
 
   const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -751,9 +754,9 @@ const SubSidebar: React.FC<SubSidebarProps> = ({ isVisible, toggleSubSidebar, cu
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  {uploadedImageFiles.length > 0 ? (
+                  {uploadedImage3Files.length > 0 ? (
                     <div className="flex flex-wrap gap-4">
-                      {uploadedImageFiles.map((imgUrl, index) => (
+                      {uploadedImage3Files.map((imgUrl, index) => (
                         <img
                           key={index}
                           src={imgUrl}

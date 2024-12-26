@@ -2793,11 +2793,6 @@ const ContentArea: React.FC<ContentAreaProps> = ({
   useEffect(() => {
     // 只在 stage1 且有模型時執行
     if (currentStage === 'stage1' && modelUrl && container2Ref.current) {
-      // 如果模型沒有被修改且已有保存的預覽圖，則不生成新的預覽圖
-      if (!isModelModified) {
-        return;
-      }
-
       const generateThumbnail = async () => {
         try {
           const tempCanvas = document.createElement('canvas');
@@ -2813,37 +2808,38 @@ const ContentArea: React.FC<ContentAreaProps> = ({
           const threeCanvas = container2Ref.current?.querySelector('canvas');
 
           if (threeCanvas) {
-            const scale = modelPosition.scale || 1; 
-            const width = modelPosition.width * scale;
-            const height = modelPosition.height * scale;
-            const x = modelPosition.x + width / 2;
-            const y = modelPosition.y + height / 2;
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.drawImage(
-              threeCanvas,
-              -width / 2,
-              -height / 2,
-              width,
-              height
-            );
-            ctx.restore();
+            setTimeout(() => {
+              const scale = modelPosition.scale || 1;
+              const width = modelPosition.width * scale;
+              const height = modelPosition.height * scale;
+              const x = modelPosition.x + width / 2;
+              const y = modelPosition.y + height / 2;
+              ctx.save();
+              ctx.translate(x, y);
+              ctx.drawImage(
+                threeCanvas,
+                -width / 2,
+                -height / 2,
+                width,
+                height
+              );
+              ctx.restore();
 
-            const imgData = tempCanvas.toDataURL('image/png');
+              const imgData = tempCanvas.toDataURL('image/png');
 
-            // 更新 stage1 的縮圖
-            setStages(prev => ({
-              ...prev,
-              stage1: {
-                ...prev.stage1,
-                thumbnailUrl: imgData
-              }
-            }));
+              // 更新 stage1 的縮圖
+              setStages(prev => ({
+                ...prev,
+                stage1: {
+                  ...prev.stage1,
+                  thumbnailUrl: imgData
+                }
+              }));
 
-            // 如果當前在 stage1，也更新當前顯示的縮圖
-            if (currentStage === 'stage1') {
               setThumbnailUrl(imgData);
-            }
+
+              tempCanvas.remove();
+            }, 1000); 
           }
 
           tempCanvas.remove();
@@ -3348,7 +3344,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
               </div>
             )}
 
-            {/* {(currentStage === 'stage1') && (
+            {(currentStage === 'stage1') && (
               <div
                 className={`w-16 h-16 rounded-[14px] overflow-hidden bg-[#F4F4F4]`}
                 style={{
@@ -3358,7 +3354,7 @@ const ContentArea: React.FC<ContentAreaProps> = ({
               >
                 <img src={thumbnailUrl} alt="" className='w-full h-full' />
               </div>
-            )} */}
+            )}
 
             {/* 新增按鈕部分保持不變 */}
             <button
